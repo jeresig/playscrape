@@ -9,16 +9,19 @@
   "files": [
     "./dist/"
   ],
+  "publishConfig": {
+    "access": "public"
+  },
   "scripts": {
     "test": "echo \"No tests\"",
     "dev": "node --no-warnings --enable-source-maps --loader ts-node/esm src/playscrape.ts",
-    "build-types": "./node_modules/.bin/tsc ./src/index.ts --declaration --emitDeclarationOnly --skipLibCheck --esModuleInterop --outDir dist/",
+    "build-types": "tsc ./src/index.ts --declaration --emitDeclarationOnly --skipLibCheck --esModuleInterop --outDir dist/",
     "build": "tsc && yarn build-types && chmod +x dist/playscrape.js",
     "release": "yarn build && changeset publish",
     "generate": "drizzle-kit generate:sqlite"
   },
   "bin": {
-    "playscrape": "./dist/playscrape.js"
+    "playscrape": "dist/playscrape.js"
   },
   "author": "John Resig <jeresig@gmail.com>",
   "license": "MIT",
