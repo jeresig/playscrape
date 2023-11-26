@@ -1,5 +1,11 @@
 # playscrape
 
+## 0.0.7
+
+### Patch Changes
+
+-   1af78f9: Fix up exports.
+
 ## 0.0.6
 
 ### Patch Changes
