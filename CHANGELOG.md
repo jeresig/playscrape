@@ -1,5 +1,11 @@
 # playscrape
 
+## 0.0.3
+
+### Patch Changes
+
+-   d71aaca: Fix up NPM access permissions.
+
 ## 0.0.2
 
 ### Patch Changes
