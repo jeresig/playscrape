@@ -43,7 +43,6 @@ const cli = new Command()
     })
     .option("--debug", "output extra debugging information")
     .option("--db-name <name>", "database name", DEFAULT_DB)
-    .option("--migrations-folder <folder>", "db migrations folder", "drizzle")
     .option("--dry-run", "do not save any data to the database or file system")
     .addOption(
         new Option(
@@ -102,7 +101,6 @@ const cli = new Command()
         debug: options.debug,
         dbName:
             args.dbName !== DEFAULT_DB ? args.dbName : dbName || args.dbName,
-        migrationsFolder: args.migrationsFolder,
     });
 
     if (args.mode === "export") {
