@@ -3,7 +3,7 @@ name: Push Check
 on: [push]
 
 jobs:
-    publish:
+    check:
         runs-on: ubuntu-latest
         steps:
             - uses: actions/checkout@v4
