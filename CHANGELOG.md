@@ -1,5 +1,11 @@
 # playscrape
 
+## 0.0.4
+
+### Patch Changes
+
+-   0705c63: Ship drizzle migration logic.
+
 ## 0.0.3
 
 ### Patch Changes
