@@ -1,5 +1,12 @@
 # playscrape
 
+## 0.0.5
+
+### Patch Changes
+
+-   0113b82: Fix bug and add pull_request workflow.
+-   54a5797: Just export the types.
+
 ## 0.0.4
 
 ### Patch Changes
