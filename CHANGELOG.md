@@ -1,5 +1,11 @@
 # playscrape
 
+## 0.0.6
+
+### Patch Changes
+
+-   7f0e5e0: Include drizzle files in package.
+
 ## 0.0.5
 
 ### Patch Changes
