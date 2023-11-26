@@ -4,7 +4,7 @@
   "description": "",
   "type": "module",
   "exports": "./dist/index.js",
-  "types": "./dist/index.d.ts",
+  "types": "./dist/types.d.ts",
   "sideEffects": false,
   "files": [
     "./dist/"
@@ -15,7 +15,7 @@
   "scripts": {
     "test": "echo \"No tests\"",
     "dev": "node --no-warnings --enable-source-maps --loader ts-node/esm src/playscrape.ts",
-    "build-types": "tsc ./src/index.ts --declaration --emitDeclarationOnly --skipLibCheck --esModuleInterop --outDir dist/",
+    "build-types": "tsc ./src/types.ts --declaration --emitDeclarationOnly --skipLibCheck --esModuleInterop --outDir dist/",
     "build": "tsc && yarn build-types && chmod +x dist/playscrape.js",
     "release": "yarn build && changeset publish",
     "generate": "drizzle-kit generate:sqlite"
