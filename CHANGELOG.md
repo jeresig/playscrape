@@ -1,5 +1,11 @@
 # playscrape
 
+## 0.0.8
+
+### Patch Changes
+
+-   8905d12: Add --export-file and exportFile options.
+
 ## 0.0.7
 
 ### Patch Changes
