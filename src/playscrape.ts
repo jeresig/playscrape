@@ -52,6 +52,10 @@ const cli = new Command()
             .default("update")
             .choices(["replace", "update", "export"]),
     )
+    .option(
+        "--export-file <file>",
+        "the JSON file to export to, if using export mode",
+    )
     .option("--output <dir>", "download output directory", "downloads")
     .option("--format <format>", "image output format", "webp")
     .option("--timeout <number>", "timeout in milliseconds", "60000")
@@ -84,7 +88,7 @@ const cli = new Command()
         process.exit(1);
     }
 
-    const {dbName, actions} = await import(resolvedActionFileName);
+    const {dbName, exportFile, actions} = await import(resolvedActionFileName);
 
     if (
         !actions ||
@@ -126,7 +130,18 @@ const cli = new Command()
             });
         }
 
-        console.log(JSON.stringify(finalResults));
+        const resultString = JSON.stringify(finalResults);
+
+        if (args.exportFile || exportFile) {
+            fs.writeFileSync(
+                args.exportFile || exportFile,
+                resultString,
+                "utf-8",
+            );
+        } else {
+            console.log(resultString);
+        }
+
         process.exit(0);
     }
 
