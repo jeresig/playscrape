@@ -1,5 +1,11 @@
 # playscrape
 
+## 0.0.9
+
+### Patch Changes
+
+-   38a6225: Remove all xmlns, not just xhtml.
+
 ## 0.0.8
 
 ### Patch Changes
