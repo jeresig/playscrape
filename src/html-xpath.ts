@@ -7,7 +7,7 @@ export const parseHTMLToDom = (content: string) => {
     const rawDom = parse(content);
     const xhtml = xmlserializer
         .serializeToString(rawDom)
-        .replace(/ xmlns="http:\/\/www.w3.org\/1999\/xhtml"/g, "");
+        .replace(/ xmlns=["'][^"']["']/g, "");
     return new DOMParser().parseFromString(xhtml);
 };
 
