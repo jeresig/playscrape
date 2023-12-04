@@ -1,5 +1,11 @@
 # playscrape
 
+## 0.0.11
+
+### Patch Changes
+
+-   14ab3f8: Add support for extracting multiple records from one page, fix spinner.
+
 ## 0.0.10
 
 ### Patch Changes
