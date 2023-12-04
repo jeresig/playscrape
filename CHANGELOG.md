@@ -1,5 +1,11 @@
 # playscrape
 
+## 0.0.10
+
+### Patch Changes
+
+-   e4593c2: Fix typo.
+
 ## 0.0.9
 
 ### Patch Changes
