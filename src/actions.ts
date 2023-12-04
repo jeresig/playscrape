@@ -88,60 +88,66 @@ const handleExtract = async ({
             return;
         }
 
-        extractSpinner.succeed(`Extracted data.`);
+        const extractedRecords = Array.isArray(extracted)
+            ? extracted
+            : [extracted];
 
-        const saveSpinner = ora({text: "Saving record...", indent}).start();
-        try {
-            const record: NewRecord = {
-                id: extracted.id || hash(url),
-                url,
-                action: actionName,
-                content,
-                cookies,
-                extracted: JSON.stringify(extracted),
-            };
+        extractSpinner.succeed(
+            `Extracted ${extractedRecords.length} record(s).`,
+        );
 
-            //await db.get(records).select(records.id);
-
-            if (dryRun) {
-                saveSpinner.succeed("DRY RUN: Record would be saved here.");
-                console.log(JSON.stringify(extracted, null, 4));
-            } else {
-                await db
-                    .insert(records)
-                    .values(record)
-                    .onConflictDoUpdate({
-                        target: records.id,
-                        set: {
-                            url,
-                            cookies,
-                            extracted: record.extracted,
-                            updated_at: sql`CURRENT_TIMESTAMP`,
-                        },
-                    })
-                    .run();
-
-                saveSpinner.succeed("Saved record.");
-            }
-
-            if (!action.downloadImages) {
-                await downloadImages({
-                    action,
-                    record,
-                    url,
-                    dom,
-                    query,
-                    queryAll,
+        for (const extracted of extractedRecords) {
+            const saveSpinner = ora({text: "Saving record...", indent}).start();
+            try {
+                const record: NewRecord = {
+                    id: extracted.id || hash(extracted.url || url),
+                    url: extracted.url || url,
+                    action: actionName,
                     content,
                     cookies,
-                    playscrape,
-                    options,
-                });
+                    extracted: JSON.stringify(extracted),
+                };
+
+                if (dryRun) {
+                    saveSpinner.succeed("DRY RUN: Record would be saved here.");
+                    console.log(JSON.stringify(extracted, null, 4));
+                } else {
+                    await db
+                        .insert(records)
+                        .values(record)
+                        .onConflictDoUpdate({
+                            target: records.id,
+                            set: {
+                                url,
+                                cookies,
+                                extracted: record.extracted,
+                                updated_at: sql`CURRENT_TIMESTAMP`,
+                            },
+                        })
+                        .run();
+
+                    saveSpinner.succeed("Saved record.");
+                }
+
+                if (!action.downloadImages) {
+                    await downloadImages({
+                        action,
+                        record,
+                        url,
+                        dom,
+                        query,
+                        queryAll,
+                        content,
+                        cookies,
+                        playscrape,
+                        options,
+                    });
+                }
+            } catch (e) {
+                saveSpinner.fail("Failed to save record.");
+                console.error(e);
+                return;
             }
-        } catch (e) {
-            saveSpinner.fail("Failed to save record.");
-            console.error(e);
-            return;
         }
     } catch (e) {
         extractSpinner.fail(`Failed to extract data from ${url}.`);
@@ -194,6 +200,8 @@ export const handleMirrorAction = async ({
                     options,
                 });
             }
+
+            extractSpinner.succeed(`Extracted data from ${fileName}.`);
         } catch (e) {
             extractSpinner.fail(`Failed to extract data from ${fileName}.`);
             console.error(e);
