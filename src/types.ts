@@ -22,8 +22,8 @@ export type Action = {
         content,
     }: {
         dom: Document;
-        query: (query: string) => Element | null;
-        queryAll: (query: string) => Array<Element>;
+        query: (query: string, root?: Node) => Element | null;
+        queryAll: (query: string, root?: Node) => Array<Element>;
         url: string;
         content: string;
     }) => Promise<any>;
@@ -37,8 +37,8 @@ export type Action = {
     }: {
         record: NewRecord;
         dom: Document;
-        query: (query: string) => Element | null;
-        queryAll: (query: string) => Array<Element>;
+        query: (query: string, root?: Node) => Element | null;
+        queryAll: (query: string, root?: Node) => Array<Element>;
         url: string;
         content: string;
     }) => Promise<Array<string>>;
