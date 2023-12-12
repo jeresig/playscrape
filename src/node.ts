@@ -1,7 +1,7 @@
-import {fileURLToPath} from "node:url";
+import {createRequire} from "node:module";
 import {dirname} from "node:path";
 import {argv} from "node:process";
-import {createRequire} from "node:module";
+import {fileURLToPath} from "node:url";
 
 /**
  * This is an ESM replacement for `__filename`.

@@ -1,12 +1,12 @@
 import {promises as fs} from "node:fs";
-import ora from "ora";
 import {sql} from "drizzle-orm";
+import ora from "ora";
 
-import {Options, Playscrape, PlayscrapeBrowser, Action} from "./types.js";
-import {hash, wait} from "./utils.js";
-import {records, NewRecord} from "./schema.js";
 import {downloadImages} from "./downloads.js";
 import {parseHTMLForXPath} from "./html-xpath.js";
+import {NewRecord, records} from "./schema.js";
+import {Action, Options, Playscrape, PlayscrapeBrowser} from "./types.js";
+import {hash, wait} from "./utils.js";
 
 const getPageContents = async ({
     playBrowser,
@@ -19,7 +19,7 @@ const getPageContents = async ({
     const {indent} = options;
 
     const extractSpinner = ora({
-        text: `Downloading page data for extraction...`,
+        text: "Downloading page data for extraction...",
         indent,
     }).start();
 
@@ -34,11 +34,11 @@ const getPageContents = async ({
                     )}`,
             )
             .join("; ");
-        extractSpinner.succeed(`Downloaded page data.`);
+        extractSpinner.succeed("Downloaded page data.");
 
         return {content, cookies};
     } catch (e) {
-        extractSpinner.fail(`Failed to download page data.`);
+        extractSpinner.fail("Failed to download page data.");
         console.error(e);
         return {content: "", cookies: ""};
     }
@@ -68,7 +68,7 @@ const handleExtract = async ({
     }
 
     const extractSpinner = ora({
-        text: `Extracting data...`,
+        text: "Extracting data...",
         indent,
     }).start();
 
@@ -173,7 +173,7 @@ export const handleMirrorAction = async ({
         console.log(`Action (mirror): ${fileName}`);
 
         const extractSpinner = ora({
-            text: `Extracting data...`,
+            text: "Extracting data...",
             indent,
         }).start();
 

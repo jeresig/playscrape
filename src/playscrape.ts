@@ -4,9 +4,9 @@ import {Command, Option} from "@commander-js/extra-typings";
 import ora from "ora";
 
 import {initDB} from "./db.js";
-import {records, downloads} from "./schema.js";
-import {Options} from "./types.js";
 import {initBrowser, initMirror} from "./index.js";
+import {downloads, records} from "./schema.js";
+import {Options} from "./types.js";
 
 let cachedConfigFile: any = null;
 const DEFAULT_DB = "playscrape.sqlite";
@@ -31,7 +31,7 @@ const cli = new Command()
     .description(
         "Scrape data from a website using Playwright, or local HTML files.",
     )
-    .version(process.env["npm_package_version"] ?? "0.0.0")
+    .version(process.env.npm_package_version ?? "0.0.0")
     .argument("<action_file>", "JS file defining the actions to perform.")
     .option("--config <path>", "path to configuration file")
     .hook("preSubcommand", async (hookedCommand, subCommand) => {
@@ -62,7 +62,7 @@ const cli = new Command()
     .option("--delay <number>", "delay in milliseconds", "1000")
     .parse();
 
-(async function () {
+(async () => {
     const args = cli.opts();
     const options: Options = {
         debug: !!args.debug,
@@ -147,21 +147,21 @@ const cli = new Command()
 
     if (args.mode === "replace") {
         const resetSpinner = ora({
-            text: `Resetting existing database...`,
+            text: "Resetting existing database...",
         }).start();
         if (options.dryRun) {
-            resetSpinner.warn(`Database reset skipped due to --dry-run flag.`);
+            resetSpinner.warn("Database reset skipped due to --dry-run flag.");
         } else {
             db.delete(downloads).run();
             db.delete(records).run();
         }
-        resetSpinner.succeed(`Database reset complete.`);
+        resetSpinner.succeed("Database reset complete.");
     }
 
     if (args.mode === "update" || args.mode === "replace") {
-        if (actions["mirror"]) {
+        if (actions.mirror) {
             await initMirror({db, options, actions});
-        } else if (actions["start"]) {
+        } else if (actions.start) {
             await initBrowser({db, options, actions});
         } else {
             console.error("No actions found.");

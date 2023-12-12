@@ -1,7 +1,7 @@
+import {DOMParser} from "@xmldom/xmldom";
 import {parse} from "parse5";
 import xmlserializer from "xmlserializer";
 import xpath from "xpath";
-import {DOMParser} from "@xmldom/xmldom";
 
 export const parseHTMLToDom = (content: string) => {
     const rawDom = parse(content);

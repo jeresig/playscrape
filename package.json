@@ -19,7 +19,9 @@
     "build-types": "tsc ./src/types.ts --declaration --emitDeclarationOnly --skipLibCheck --esModuleInterop --outDir dist/",
     "build": "tsc && yarn build-types && chmod +x dist/playscrape.js",
     "release": "yarn build && changeset publish",
-    "generate": "drizzle-kit generate:sqlite"
+    "generate": "drizzle-kit generate:sqlite",
+    "lint:ci": "biome check .",
+    "lint": "biome check --apply-unsafe ."
   },
   "bin": {
     "playscrape": "dist/playscrape.js"
@@ -41,13 +43,13 @@
     "xpath": "^0.0.33"
   },
   "devDependencies": {
+    "@biomejs/biome": "1.4.1",
     "@changesets/cli": "^2.26.2",
     "@sindresorhus/tsconfig": "^5.0.0",
     "@types/better-sqlite3": "^7.6.4",
     "@types/node": "^20.2.5",
     "@types/xmlserializer": "^0.6.5",
     "drizzle-kit": "^0.18.1",
-    "prettier": "^2.8.8",
     "ts-node": "^10.9.1",
     "typescript": "^5.2.2"
   }

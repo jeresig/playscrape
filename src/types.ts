@@ -1,5 +1,5 @@
-import {BrowserContext, Page} from "playwright";
 import {BetterSQLite3Database} from "drizzle-orm/better-sqlite3";
+import {BrowserContext, Page} from "playwright";
 
 import {NewRecord} from "./schema.js";
 

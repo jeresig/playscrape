@@ -1,14 +1,14 @@
 import {Buffer} from "buffer";
 import path from "node:path";
-import sharp from "sharp";
+import {eq, sql} from "drizzle-orm";
 import ora from "ora";
-import {sql, eq} from "drizzle-orm";
+import sharp from "sharp";
 
-import {wait} from "./utils.js";
 import {downloads} from "./schema.js";
-import {hash} from "./utils.js";
 import {Download, NewDownload, NewRecord} from "./schema.js";
-import {Action, Playscrape, Options} from "./types.js";
+import {Action, Options, Playscrape} from "./types.js";
+import {wait} from "./utils.js";
+import {hash} from "./utils.js";
 
 const getNormalSize = ({
     width,

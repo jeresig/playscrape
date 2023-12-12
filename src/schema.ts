@@ -1,5 +1,5 @@
-import {sql, InferModel} from "drizzle-orm";
-import {sqliteTable, text, integer} from "drizzle-orm/sqlite-core";
+import {InferModel, sql} from "drizzle-orm";
+import {integer, sqliteTable, text} from "drizzle-orm/sqlite-core";
 
 export const records = sqliteTable("records", {
     id: text("id").primaryKey(),

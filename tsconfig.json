@@ -23,7 +23,7 @@
 	"noUnusedParameters": true,
 	"noFallthroughCasesInSwitch": true,
 	"noUncheckedIndexedAccess": true,
-	"noPropertyAccessFromIndexSignature": true,
+	"noPropertyAccessFromIndexSignature": false,
 	"noEmitOnError": true,
 	"useDefineForClassFields": true,
 	"forceConsistentCasingInFileNames": true,

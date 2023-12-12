@@ -1,9 +1,9 @@
-import {chromium} from "playwright";
-import ora from "ora";
 import FastGlob from "fast-glob";
+import ora from "ora";
+import {chromium} from "playwright";
 
 import {handleBrowserAction, handleMirrorAction} from "./actions.js";
-import {Options, PlayscrapeBrowser, Playscrape, Actions} from "./types.js";
+import {Actions, Options, Playscrape, PlayscrapeBrowser} from "./types.js";
 
 export * from "./types.js";
 export {initDB} from "./db.js";
@@ -59,7 +59,7 @@ export const initMirror = async ({
     options: Options;
     actions: Actions;
 }) => {
-    const action = actions["mirror"];
+    const action = actions.mirror;
 
     if (!action) {
         return;
