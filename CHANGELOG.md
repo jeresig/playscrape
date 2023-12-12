@@ -1,5 +1,11 @@
 # playscrape
 
+## 0.0.12
+
+### Patch Changes
+
+-   8db4af4: Allow for custom root node for query/queryAll.
+
 ## 0.0.11
 
 ### Patch Changes
