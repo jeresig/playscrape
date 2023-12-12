@@ -1,5 +1,11 @@
 # playscrape
 
+## 0.0.13
+
+### Patch Changes
+
+-   e1dd154: Switch to using Biome.
+
 ## 0.0.12
 
 ### Patch Changes
