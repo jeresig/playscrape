@@ -35,6 +35,9 @@
     "importsNotUsedAsValues": "remove",               /* Specify emit/checking behavior for imports that are only used for types. */
     "isolatedModules": false,                          /* Ensure that each file can be safely transpiled without relying on other imports. */
     "esModuleInterop": true,
+    "types": [
+      "@aws-lite/s3-types",
+    ],
   },
   "include": [
     "./src/**/*.ts"

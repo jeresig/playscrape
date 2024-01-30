@@ -1,5 +1,6 @@
 #!/usr/bin/env node
 import fs from "node:fs";
+import {ObjectCannedACL, S3Client} from "@aws-sdk/client-s3";
 import {Command, Option} from "@commander-js/extra-typings";
 import ora from "ora";
 
@@ -60,6 +61,33 @@ const cli = new Command()
     .option("--format <format>", "image output format", "webp")
     .option("--timeout <number>", "timeout in milliseconds", "60000")
     .option("--delay <number>", "delay in milliseconds", "1000")
+    .option("--overwrite", "overwrite existing files")
+    .addOption(
+        new Option(
+            "--download-to <location>",
+            "where to download the images to.",
+        )
+            .default("local")
+            .choices(["local", "s3"]),
+    )
+    .option(
+        "--s3-bucket <bucket>",
+        "S3 bucket to upload to, required if download-to is s3.",
+    )
+    .option("--s3-path <path>", "S3 path to upload to.")
+    .addOption(
+        new Option("--s3-acl <acl>", "S3 ACL permissions to set.")
+            .default<ObjectCannedACL>("private")
+            .choices<ObjectCannedACL[]>([
+                "private",
+                "authenticated-read",
+                "aws-exec-read",
+                "bucket-owner-full-control",
+                "bucket-owner-read",
+                "public-read",
+                "public-read-write",
+            ]),
+    )
     .parse();
 
 (async () => {
@@ -69,8 +97,13 @@ const cli = new Command()
         dryRun: !!args.dryRun,
         output: args.output,
         format: args.format,
-        timeout: parseInt(args.timeout),
-        delay: parseInt(args.delay),
+        timeout: parseInt(args.timeout, 10),
+        delay: parseInt(args.delay, 10),
+        overwrite: !!args.overwrite,
+        downloadTo: args.downloadTo === "local" ? "local" : "s3",
+        s3Bucket: args.s3Bucket,
+        s3Path: args.s3Path,
+        s3ACL: args.s3Acl,
         indent: 2,
     };
 
@@ -99,6 +132,16 @@ const cli = new Command()
             "No actions found. Make sure you export an actions object.",
         );
         process.exit(1);
+    }
+
+    if (options.downloadTo === "s3") {
+        if (!options.s3Bucket) {
+            throw new Error(
+                "S3 bucket not specified, must be specified if --download-to=s3.",
+            );
+        }
+
+        options.aws = new S3Client();
     }
 
     const db = initDB({

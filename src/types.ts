@@ -1,3 +1,4 @@
+import {ObjectCannedACL, S3Client} from "@aws-sdk/client-s3";
 import {BetterSQLite3Database} from "drizzle-orm/better-sqlite3";
 import {BrowserContext, Page} from "playwright";
 
@@ -56,6 +57,12 @@ export type Options = {
     timeout: number;
     delay: number;
     indent: number;
+    overwrite: boolean;
+    downloadTo: "local" | "s3";
+    aws?: S3Client;
+    s3Bucket?: string;
+    s3Path?: string;
+    s3ACL: ObjectCannedACL;
 };
 
 export type PlayscrapeBrowser = {

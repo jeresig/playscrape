@@ -23,18 +23,18 @@
     "lint:ci": "biome check .",
     "lint": "biome check --apply-unsafe ."
   },
-  "bin": {
-    "playscrape": "dist/playscrape.js"
-  },
+  "bin": "dist/playscrape.js",
   "author": "John Resig <jeresig@gmail.com>",
   "license": "MIT",
   "dependencies": {
+    "@aws-sdk/client-s3": "^3.502.0",
     "@commander-js/extra-typings": "^11.0.0",
     "@xmldom/xmldom": "^0.8.10",
     "better-sqlite3": "^8.4.0",
     "commander": "^11.0.0",
     "drizzle-orm": "^0.26.5",
     "fast-glob": "^3.3.2",
+    "mime": "^4.0.1",
     "ora": "^6.3.1",
     "parse5": "^7.1.2",
     "playwright": "^1.32.3",

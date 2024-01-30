@@ -1,9 +1,14 @@
 import {Buffer} from "buffer";
+import fs from "node:fs";
 import path from "node:path";
+import nodeUrl from "node:url";
+import {GetObjectCommand, PutObjectCommand} from "@aws-sdk/client-s3";
 import {eq, sql} from "drizzle-orm";
+import mime from "mime/lite";
 import ora from "ora";
 import sharp from "sharp";
 
+import {IncomingMessage} from "http";
 import {downloads} from "./schema.js";
 import {Download, NewDownload, NewRecord} from "./schema.js";
 import {Action, Options, Playscrape} from "./types.js";
@@ -21,6 +26,36 @@ const getNormalSize = ({
 }) =>
     (orientation || 0) >= 5 ? {width: height, height: width} : {width, height};
 
+export const getImageIdAndFileName = ({
+    url,
+    format,
+}: {
+    url: string;
+    format: string;
+}) => {
+    const isFileURL = url.startsWith("file://");
+    let id = "";
+    let origFileName = "";
+
+    if (isFileURL) {
+        const filePath = nodeUrl.fileURLToPath(url);
+        origFileName = path.basename(filePath);
+        id = hash(origFileName);
+    } else {
+        id = hash(url);
+        origFileName = path.basename(new URL(url).pathname);
+    }
+
+    // If no extension, we default to outputting as a JPG
+    if (!origFileName.includes(".")) {
+        origFileName = `${origFileName}.jpg`;
+    }
+
+    const fileName = format === "original" ? origFileName : `${id}.${format}`;
+
+    return {id, fileName, isFileURL};
+};
+
 export const downloadImage = async ({
     recordId,
     url,
@@ -32,26 +67,155 @@ export const downloadImage = async ({
     cookies: string | null;
     options: Options;
 }): Promise<NewDownload> => {
-    const {format, dryRun, output} = options;
-    const hashedUrl = hash(url);
-    const fileName = `${hashedUrl}.${format}`;
+    const {
+        format,
+        dryRun,
+        output,
+        overwrite,
+        downloadTo,
+        aws,
+        s3Bucket,
+        s3Path,
+        s3ACL,
+    } = options;
+    const {id, fileName, isFileURL} = getImageIdAndFileName({url, format});
     const outputFilePath = path.join(output, fileName);
+    let image = null;
+    let hasBeenDownloaded = false;
 
-    const response = await fetch(url, {
-        headers: {
-            Cookie: cookies || "",
-        },
-    });
+    // Check to see if the image has already been downloaded
 
-    const blob = await response.blob();
-    const arrayBuffer = await blob.arrayBuffer();
-    const buffer = Buffer.from(arrayBuffer);
+    if (!overwrite) {
+        if (downloadTo === "local" && fs.existsSync(outputFilePath)) {
+            try {
+                image = sharp(outputFilePath);
+                hasBeenDownloaded = true;
+            } catch (e) {
+                console.error(`Failed to read image: ${outputFilePath}`, e);
+            }
+        } else if (downloadTo === "s3") {
+            if (!aws) {
+                throw new Error("AWS client not initialized.");
+            }
 
-    // Process the image and convert it to the expected format
-    const image = sharp(buffer);
+            if (!s3Bucket) {
+                throw new Error("S3 bucket not specified.");
+            }
 
-    if (!dryRun) {
-        await image.toFile(outputFilePath);
+            // Download from S3
+            const command = new GetObjectCommand({
+                Bucket: s3Bucket,
+                Key: s3Path
+                    ? path.join(s3Path, outputFilePath)
+                    : outputFilePath,
+            });
+
+            try {
+                const {Body} = await aws.send(command);
+
+                if (Body) {
+                    const stream = Body as IncomingMessage;
+                    const buffers = [];
+
+                    for await (const chunk of stream) {
+                        buffers.push(chunk);
+                    }
+
+                    image = sharp(Buffer.concat(buffers));
+                    hasBeenDownloaded = true;
+                }
+            } catch (e) {
+                console.error(
+                    `Failed to read image from S3: ${outputFilePath}`,
+                    e,
+                );
+            }
+        }
+    }
+
+    if (!image) {
+        if (isFileURL) {
+            const filePath = nodeUrl.fileURLToPath(url);
+
+            if (!fs.existsSync(filePath)) {
+                throw new Error(`File does not exist: ${filePath}`);
+            }
+
+            if (overwrite) {
+                if (downloadTo === "local") {
+                    if (fs.existsSync(outputFilePath)) {
+                    } else {
+                        image = sharp(filePath);
+                    }
+                }
+            }
+        } else {
+            const response = await fetch(url, {
+                headers: {
+                    Cookie: cookies || "",
+                },
+            });
+
+            if (!response.ok) {
+                throw new Error(
+                    `Failed to download image. Status: ${response.status}`,
+                );
+            }
+
+            if (!response.headers.get("content-type")?.includes("image/")) {
+                throw new Error(
+                    `Failed to download image. Content-Type: ${response.headers.get(
+                        "content-type",
+                    )}`,
+                );
+            }
+
+            const blob = await response.blob();
+            const arrayBuffer = await blob.arrayBuffer();
+            const buffer = Buffer.from(arrayBuffer);
+
+            // Process the image
+            image = sharp(buffer);
+        }
+    }
+
+    if (!image) {
+        throw new Error("Failed to read image.");
+    }
+
+    if (!dryRun && !hasBeenDownloaded) {
+        // Output the image and convert it to its desired format
+        if (downloadTo === "local") {
+            await image.toFile(outputFilePath);
+        } else if (downloadTo === "s3") {
+            if (!aws) {
+                throw new Error("AWS client not initialized.");
+            }
+
+            if (!s3Bucket) {
+                throw new Error("S3 bucket not specified.");
+            }
+
+            // Download from S3
+            const command = new PutObjectCommand({
+                Body: await image.toBuffer(),
+                ContentType: mime.getType(outputFilePath) || "image/jpeg",
+                ACL: s3ACL,
+                Bucket: s3Bucket,
+                Key: s3Path
+                    ? path.join(s3Path, outputFilePath)
+                    : outputFilePath,
+            });
+
+            try {
+                await aws.send(command);
+            } catch (e) {
+                console.error(
+                    `Failed to upload image to S3: ${outputFilePath}`,
+                    e,
+                );
+            }
+        }
     }
 
     const {
@@ -65,8 +229,8 @@ export const downloadImage = async ({
     // TODO: Also upload this to a third-party service
 
     return {
-        id: hashedUrl,
-        recordId: recordId,
+        id,
+        recordId,
         orig_url: url,
         orig_cookies: cookies,
         ...getNormalSize({
@@ -127,7 +291,7 @@ export const downloadImages = async ({
 
         for (const url of urls) {
             const downloadImageSpinner = ora({
-                text: `Downloading ${url}`,
+                text: `Downloading Image from ${url}`,
                 indent,
             }).start();
             try {
