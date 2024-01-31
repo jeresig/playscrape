@@ -1,5 +1,11 @@
 # playscrape
 
+## 0.1.0
+
+### Minor Changes
+
+-   c8fe992: Add S3 support, refactor option config, support overwriting.
+
 ## 0.0.13
 
 ### Patch Changes
