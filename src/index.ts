@@ -3,7 +3,12 @@ import ora from "ora";
 import {chromium} from "playwright";
 
 import {handleBrowserAction, handleMirrorAction} from "./actions.js";
-import {Actions, Options, Playscrape, PlayscrapeBrowser} from "./types.js";
+import {
+    Actions,
+    InternalOptions,
+    Playscrape,
+    PlayscrapeBrowser,
+} from "./types.js";
 
 export * from "./types.js";
 export {initDB} from "./db.js";
@@ -14,7 +19,7 @@ export const initBrowser = async ({
     actions,
 }: {
     db: Playscrape["db"];
-    options: Options;
+    options: InternalOptions;
     actions: Actions;
 }) => {
     const spinner = ora("Starting browser...").start();
@@ -56,7 +61,7 @@ export const initMirror = async ({
     actions,
 }: {
     db: Playscrape["db"];
-    options: Options;
+    options: InternalOptions;
     actions: Actions;
 }) => {
     const action = actions.mirror;

@@ -1,4 +1,4 @@
-import {ObjectCannedACL, S3Client} from "@aws-sdk/client-s3";
+import {ObjectCannedACL} from "@aws-sdk/client-s3";
 import {BetterSQLite3Database} from "drizzle-orm/better-sqlite3";
 import {BrowserContext, Page} from "playwright";
 
@@ -49,20 +49,35 @@ export type Actions = {
     [recordName: string]: Action;
 };
 
-export type Options = {
+export type InternalOptions = {
     debug: boolean;
     dryRun: boolean;
-    output: string;
+    imageDir?: string;
     format: string;
     timeout: number;
     delay: number;
     indent: number;
     overwrite: boolean;
     downloadTo: "local" | "s3";
-    aws?: S3Client;
-    s3Bucket?: string;
-    s3Path?: string;
-    s3ACL: ObjectCannedACL;
+    dbName: string;
+    exportFile?: string;
+    s3?: S3Options;
+};
+
+export type S3Options = {
+    Bucket: string;
+    pathPrefix?: string;
+    ACL?: ObjectCannedACL;
+};
+
+export type Options = {
+    format?: string;
+    overwrite?: boolean;
+    downloadTo: "local" | "s3";
+    dbName: string;
+    exportFile?: string;
+    imageDir?: string;
+    s3?: S3Options;
 };
 
 export type PlayscrapeBrowser = {

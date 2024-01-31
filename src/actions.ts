@@ -5,7 +5,12 @@ import ora from "ora";
 import {downloadImages} from "./downloads.js";
 import {parseHTMLForXPath} from "./html-xpath.js";
 import {NewRecord, records} from "./schema.js";
-import {Action, Options, Playscrape, PlayscrapeBrowser} from "./types.js";
+import {
+    Action,
+    InternalOptions,
+    Playscrape,
+    PlayscrapeBrowser,
+} from "./types.js";
 import {hash, wait} from "./utils.js";
 
 const getPageContents = async ({
@@ -13,7 +18,7 @@ const getPageContents = async ({
     options,
 }: {
     playBrowser: PlayscrapeBrowser;
-    options: Options;
+    options: InternalOptions;
 }) => {
     const {page, browser} = playBrowser;
     const {indent} = options;
@@ -57,7 +62,7 @@ const handleExtract = async ({
     actionName: string;
     cookies: string;
     playscrape: Playscrape;
-    options: Options;
+    options: InternalOptions;
 }) => {
     const {indent, dryRun} = options;
     const {db, actions} = playscrape;
@@ -164,7 +169,7 @@ export const handleMirrorAction = async ({
 }: {
     action: Action;
     playscrape: Playscrape;
-    options: Options;
+    options: InternalOptions;
     files: string[];
 }) => {
     const {indent} = options;
@@ -219,7 +224,7 @@ export const handleBrowserAction = async ({
     action: string;
     playscrape: Playscrape;
     playBrowser: PlayscrapeBrowser;
-    options: Options;
+    options: InternalOptions;
 }) => {
     const {indent, delay} = options;
     const {page} = playBrowser;

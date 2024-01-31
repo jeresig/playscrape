@@ -2,7 +2,7 @@ import {Buffer} from "buffer";
 import fs from "node:fs";
 import path from "node:path";
 import nodeUrl from "node:url";
-import {GetObjectCommand, PutObjectCommand} from "@aws-sdk/client-s3";
+import {GetObjectCommand, PutObjectCommand, S3Client} from "@aws-sdk/client-s3";
 import {eq, sql} from "drizzle-orm";
 import mime from "mime/lite";
 import ora from "ora";
@@ -11,9 +11,11 @@ import sharp from "sharp";
 import {IncomingMessage} from "http";
 import {downloads} from "./schema.js";
 import {Download, NewDownload, NewRecord} from "./schema.js";
-import {Action, Options, Playscrape} from "./types.js";
+import {Action, InternalOptions, Playscrape, S3Options} from "./types.js";
 import {wait} from "./utils.js";
 import {hash} from "./utils.js";
+
+let s3Client: S3Client | null = null;
 
 const getNormalSize = ({
     width,
@@ -56,6 +58,20 @@ export const getImageIdAndFileName = ({
     return {id, fileName, isFileURL};
 };
 
+const getAWS = (s3: S3Options) => {
+    if (s3Client) {
+        return s3Client;
+    }
+
+    if (!s3?.Bucket) {
+        throw new Error("S3 bucket not specified.");
+    }
+
+    s3Client = new S3Client();
+
+    return s3Client;
+};
+
 export const downloadImage = async ({
     recordId,
     url,
@@ -65,49 +81,36 @@ export const downloadImage = async ({
     recordId: string;
     url: string;
     cookies: string | null;
-    options: Options;
+    options: InternalOptions;
 }): Promise<NewDownload> => {
-    const {
-        format,
-        dryRun,
-        output,
-        overwrite,
-        downloadTo,
-        aws,
-        s3Bucket,
-        s3Path,
-        s3ACL,
-    } = options;
+    const {format, dryRun, imageDir, overwrite, downloadTo, s3} = options;
     const {id, fileName, isFileURL} = getImageIdAndFileName({url, format});
-    const outputFilePath = path.join(output, fileName);
+    const localFilePath = imageDir ? path.join(imageDir, fileName) : fileName;
     let image = null;
     let hasBeenDownloaded = false;
 
     // Check to see if the image has already been downloaded
 
     if (!overwrite) {
-        if (downloadTo === "local" && fs.existsSync(outputFilePath)) {
-            try {
-                image = sharp(outputFilePath);
-                hasBeenDownloaded = true;
-            } catch (e) {
-                console.error(`Failed to read image: ${outputFilePath}`, e);
+        if (downloadTo === "local") {
+            if (fs.existsSync(localFilePath)) {
+                try {
+                    image = sharp(localFilePath);
+                    hasBeenDownloaded = true;
+                } catch (e) {
+                    console.error(`Failed to read image: ${localFilePath}`, e);
+                }
             }
-        } else if (downloadTo === "s3") {
-            if (!aws) {
-                throw new Error("AWS client not initialized.");
-            }
-
-            if (!s3Bucket) {
-                throw new Error("S3 bucket not specified.");
-            }
+        } else if (downloadTo === "s3" && s3) {
+            const aws = getAWS(s3);
 
             // Download from S3
+            const Key = s3?.pathPrefix
+                ? path.join(s3?.pathPrefix, fileName)
+                : fileName;
             const command = new GetObjectCommand({
-                Bucket: s3Bucket,
-                Key: s3Path
-                    ? path.join(s3Path, outputFilePath)
-                    : outputFilePath,
+                Key,
+                ...s3,
             });
 
             try {
@@ -125,10 +128,7 @@ export const downloadImage = async ({
                     hasBeenDownloaded = true;
                 }
             } catch (e) {
-                console.error(
-                    `Failed to read image from S3: ${outputFilePath}`,
-                    e,
-                );
+                console.error(`Failed to download image from S3: ${Key}`, e);
             }
         }
     }
@@ -143,7 +143,7 @@ export const downloadImage = async ({
 
             if (overwrite) {
                 if (downloadTo === "local") {
-                    if (fs.existsSync(outputFilePath)) {
+                    if (fs.existsSync(localFilePath)) {
                     } else {
                         image = sharp(filePath);
                     }
@@ -186,34 +186,25 @@ export const downloadImage = async ({
     if (!dryRun && !hasBeenDownloaded) {
         // Output the image and convert it to its desired format
         if (downloadTo === "local") {
-            await image.toFile(outputFilePath);
-        } else if (downloadTo === "s3") {
-            if (!aws) {
-                throw new Error("AWS client not initialized.");
-            }
-
-            if (!s3Bucket) {
-                throw new Error("S3 bucket not specified.");
-            }
+            await image.toFile(localFilePath);
+        } else if (downloadTo === "s3" && s3) {
+            const aws = getAWS(s3);
 
             // Download from S3
+            const Key = s3?.pathPrefix
+                ? path.join(s3?.pathPrefix, fileName)
+                : fileName;
             const command = new PutObjectCommand({
                 Body: await image.toBuffer(),
-                ContentType: mime.getType(outputFilePath) || "image/jpeg",
-                ACL: s3ACL,
-                Bucket: s3Bucket,
-                Key: s3Path
-                    ? path.join(s3Path, outputFilePath)
-                    : outputFilePath,
+                ContentType: mime.getType(localFilePath) || "image/jpeg",
+                Key,
+                ...s3,
             });
 
             try {
                 await aws.send(command);
             } catch (e) {
-                console.error(
-                    `Failed to upload image to S3: ${outputFilePath}`,
-                    e,
-                );
+                console.error(`Failed to upload image to S3: ${Key}`, e);
             }
         }
     }
@@ -225,8 +216,6 @@ export const downloadImage = async ({
         height,
         orientation,
     } = await image.metadata();
-
-    // TODO: Also upload this to a third-party service
 
     return {
         id,
@@ -265,7 +254,7 @@ export const downloadImages = async ({
     content: string;
     cookies: string | null;
     playscrape: Playscrape;
-    options: Options;
+    options: InternalOptions;
 }) => {
     const {db} = playscrape;
     const {delay, indent, dryRun} = options;
