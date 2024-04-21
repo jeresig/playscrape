@@ -240,6 +240,8 @@ export const downloadImages = async ({
     dom,
     query,
     queryAll,
+    queryText,
+    queryAllText,
     content,
     cookies,
     playscrape,
@@ -250,6 +252,8 @@ export const downloadImages = async ({
     dom: Document;
     query: (query: string) => Element | null;
     queryAll: (query: string) => Array<Element>;
+    queryText: (query: string, root?: Node) => string | null;
+    queryAllText: (query: string, root?: Node) => Array<string>;
     url: string;
     content: string;
     cookies: string | null;
@@ -270,6 +274,8 @@ export const downloadImages = async ({
             dom,
             query,
             queryAll,
+            queryText,
+            queryAllText,
             content,
         });
 

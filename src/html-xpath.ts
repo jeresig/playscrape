@@ -24,10 +24,25 @@ export const parseHTMLForXPath = (content: string) => {
             xpath.isElement(node),
         ) as Element[];
     };
+    const queryText = (query: string, root: Node = dom): string | null => {
+        const results = xpath.select(query, root, true);
+        return xpath.isTextNode(results) ? results.nodeValue : null;
+    };
+    const queryAllText = (query: string, root: Node = dom): Array<string> => {
+        const results = xpath.select(query, root, false);
+        const resultsArray = Array.isArray(results) ? results : [results];
+        const textNodes = resultsArray.filter((node) =>
+            xpath.isTextNode(node),
+        ) as Text[];
+
+        return textNodes.map((node) => node.nodeValue) as string[];
+    };
 
     return {
         dom,
         query,
         queryAll,
+        queryText,
+        queryAllText,
     };
 };

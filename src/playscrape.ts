@@ -78,6 +78,16 @@ const cli = new Command()
         resolvedActionFileName
     );
 
+    if (!actions) {
+        console.error("No actions found.");
+        process.exit(1);
+    }
+
+    if (!importOptions) {
+        console.error("No options found.");
+        process.exit(1);
+    }
+
     const options: InternalOptions = {
         format: "jpg",
         debug: !!args.debug,
@@ -86,10 +96,9 @@ const cli = new Command()
         timeout: parseInt(args.timeout, 10),
         delay: parseInt(args.delay, 10),
         indent: 2,
+        downloadTo: importOptions.s3 ? "s3" : "local",
         ...importOptions,
     };
-
-    options.downloadTo = importOptions.s3 ? "s3" : "local";
 
     if (
         !actions ||

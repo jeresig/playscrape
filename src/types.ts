@@ -18,28 +18,37 @@ export type Action = {
     undoVisit?: ({page}: {page: Page}) => Promise<void>;
     extract?: ({
         dom,
-        url,
         query,
+        queryAll,
+        queryText,
+        queryAllText,
+        url,
         content,
     }: {
         dom: Document;
         query: (query: string, root?: Node) => Element | null;
         queryAll: (query: string, root?: Node) => Array<Element>;
+        queryText: (query: string, root?: Node) => string | null;
+        queryAllText: (query: string, root?: Node) => Array<string>;
         url: string;
         content: string;
     }) => Promise<any>;
     downloadImages?: ({
         record,
-        url,
         dom,
         query,
         queryAll,
+        queryText,
+        queryAllText,
+        url,
         content,
     }: {
         record: NewRecord;
         dom: Document;
         query: (query: string, root?: Node) => Element | null;
         queryAll: (query: string, root?: Node) => Array<Element>;
+        queryText: (query: string, root?: Node) => string | null;
+        queryAllText: (query: string, root?: Node) => Array<string>;
         url: string;
         content: string;
     }) => Promise<Array<string>>;
@@ -73,7 +82,6 @@ export type S3Options = {
 export type Options = {
     format?: string;
     overwrite?: boolean;
-    downloadTo: "local" | "s3";
     dbName: string;
     exportFile?: string;
     imageDir?: string;
