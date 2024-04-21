@@ -1,5 +1,11 @@
 # playscrape
 
+## 0.1.1
+
+### Patch Changes
+
+-   46e2623: Add in queryText/queryAllText, improve downloadTo API.
+
 ## 0.1.0
 
 ### Minor Changes
