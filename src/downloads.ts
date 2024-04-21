@@ -11,7 +11,12 @@ import sharp from "sharp";
 import {IncomingMessage} from "http";
 import {downloads} from "./schema.js";
 import {Download, NewDownload, NewRecord} from "./schema.js";
-import {Action, InternalOptions, Playscrape, S3Options} from "./types.js";
+import {
+    ExtractAction,
+    InternalOptions,
+    Playscrape,
+    S3Options,
+} from "./types.js";
 import {wait} from "./utils.js";
 import {hash} from "./utils.js";
 
@@ -247,7 +252,7 @@ export const downloadImages = async ({
     playscrape,
     options,
 }: {
-    action: Action;
+    action: ExtractAction;
     record: NewRecord;
     dom: Document;
     query: (query: string) => Element | null;

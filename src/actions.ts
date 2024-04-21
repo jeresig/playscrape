@@ -7,8 +7,10 @@ import {downloadImages} from "./downloads.js";
 import {parseHTMLForXPath} from "./html-xpath.js";
 import {NewRecord, records} from "./schema.js";
 import {
-    Action,
+    BrowserAction,
+    ExtractAction,
     InternalOptions,
+    MirrorAction,
     Playscrape,
     PlayscrapeBrowser,
 } from "./types.js";
@@ -51,6 +53,7 @@ const getPageContents = async ({
 };
 
 const handleExtract = async ({
+    action,
     content,
     url,
     actionName,
@@ -58,6 +61,7 @@ const handleExtract = async ({
     playscrape,
     options,
 }: {
+    action: ExtractAction;
     content: string;
     url: string;
     actionName: string;
@@ -66,8 +70,7 @@ const handleExtract = async ({
     options: InternalOptions;
 }) => {
     const {indent, dryRun} = options;
-    const {db, actions} = playscrape;
-    const action = actions[actionName];
+    const {db} = playscrape;
 
     if (!action || !action.extract) {
         return false;
@@ -175,7 +178,7 @@ export const handleMirrorAction = async ({
     options,
     files,
 }: {
-    action: Action;
+    action: MirrorAction;
     playscrape: Playscrape;
     options: InternalOptions;
     files: string[];
@@ -195,6 +198,7 @@ export const handleMirrorAction = async ({
 
             if (content) {
                 await handleExtract({
+                    action,
                     content,
                     cookies: "",
                     url,
@@ -209,18 +213,19 @@ export const handleMirrorAction = async ({
 
 export const handleBrowserAction = async ({
     action: actionName = "start",
+    actions,
     playBrowser,
     playscrape,
     options,
 }: {
     action: string;
+    actions: BrowserAction;
     playscrape: Playscrape;
     playBrowser: PlayscrapeBrowser;
     options: InternalOptions;
 }) => {
     const {indent, delay} = options;
     const {page} = playBrowser;
-    const {actions} = playscrape;
     const url = page.url();
 
     console.log(`Action (${actionName}): ${url}`);
@@ -258,6 +263,7 @@ export const handleBrowserAction = async ({
         }
 
         await handleExtract({
+            action,
             content,
             cookies,
             url,
@@ -286,6 +292,7 @@ export const handleBrowserAction = async ({
                     await wait(delay);
                     await handleBrowserAction({
                         action,
+                        actions,
                         playscrape,
                         playBrowser,
                         options,

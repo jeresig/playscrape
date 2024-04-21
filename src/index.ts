@@ -4,8 +4,9 @@ import {chromium} from "playwright";
 
 import {handleBrowserAction, handleMirrorAction} from "./actions.js";
 import {
-    Actions,
+    BrowserAction,
     InternalOptions,
+    MirrorAction,
     Playscrape,
     PlayscrapeBrowser,
 } from "./types.js";
@@ -20,7 +21,7 @@ export const initBrowser = async ({
 }: {
     db: Playscrape["db"];
     options: InternalOptions;
-    actions: Actions;
+    actions: BrowserAction;
 }) => {
     const spinner = ora("Starting browser...").start();
 
@@ -30,7 +31,6 @@ export const initBrowser = async ({
         const page = await browser.newPage();
 
         const playscrape: Playscrape = {
-            actions,
             db,
         };
 
@@ -44,6 +44,7 @@ export const initBrowser = async ({
         // Start at the beginning
         await handleBrowserAction({
             action: "start",
+            actions,
             playscrape,
             playBrowser,
             options,
@@ -58,23 +59,16 @@ export const initBrowser = async ({
 export const initMirror = async ({
     db,
     options,
-    actions,
+    action,
 }: {
     db: Playscrape["db"];
     options: InternalOptions;
-    actions: Actions;
+    action: MirrorAction;
 }) => {
-    const action = actions.mirror;
-
-    if (!action) {
-        return;
-    }
-
     const spinner = ora("Finding mirrored files to extract from...").start();
 
     try {
         const playscrape: Playscrape = {
-            actions,
             db,
         };
 

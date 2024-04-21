@@ -6,7 +6,12 @@ import ora from "ora";
 import {initDB} from "./db.js";
 import {initBrowser, initMirror} from "./index.js";
 import {downloads, records} from "./schema.js";
-import {Actions, InternalOptions, Options} from "./types.js";
+import {
+    BrowserAction,
+    InternalOptions,
+    MirrorAction,
+    Options,
+} from "./types.js";
 
 let cachedConfigFile: any = null;
 
@@ -72,14 +77,22 @@ const cli = new Command()
     }
 
     const {
-        actions,
+        browser,
+        mirror,
         options: importOptions,
-    }: {actions: Actions; options: Options} = await import(
-        resolvedActionFileName
-    );
+    }: {
+        browser: BrowserAction;
+        mirror: MirrorAction;
+        options: Options;
+    } = await import(resolvedActionFileName);
 
-    if (!actions) {
+    if (!browser && !mirror) {
         console.error("No actions found.");
+        process.exit(1);
+    }
+
+    if (browser && mirror) {
+        console.error("Both browser and mirror actions defined, only use one.");
         process.exit(1);
     }
 
@@ -101,12 +114,11 @@ const cli = new Command()
     };
 
     if (
-        !actions ||
-        typeof actions !== "object" ||
-        Object.keys(actions).length === 0
+        (typeof browser !== "object" || Object.keys(browser).length === 0) &&
+        (typeof mirror !== "object" || Object.keys(mirror).length === 0)
     ) {
         console.error(
-            "No actions found. Make sure you export an actions object.",
+            "No actions found. Make sure you export a browser or mirror object.",
         );
         process.exit(1);
     }
@@ -130,10 +142,10 @@ const cli = new Command()
     }
 
     if (mode === "update" || mode === "replace") {
-        if (actions.mirror) {
-            await initMirror({db, options, actions});
-        } else if (actions.start) {
-            await initBrowser({db, options, actions});
+        if (mirror) {
+            await initMirror({db, options, action: mirror});
+        } else if (browser) {
+            await initBrowser({db, options, actions: browser});
         } else {
             console.error("No actions found.");
             process.exit(1);

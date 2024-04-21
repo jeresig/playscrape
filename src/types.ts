@@ -4,18 +4,8 @@ import {BrowserContext, Page} from "playwright";
 
 import {NewRecord} from "./schema.js";
 
-export type Action = {
-    htmlFiles?: string | Array<string>;
+export type ExtractAction = {
     getURLFromFileName?: (fileName: string) => string;
-    init?: string | (({page}: {page: Page}) => Promise<void>);
-    visit?: ({
-        page,
-        action,
-    }: {
-        page: Page;
-        action: (action: string) => Promise<void>;
-    }) => Promise<void>;
-    undoVisit?: ({page}: {page: Page}) => Promise<void>;
     extract?: ({
         dom,
         query,
@@ -54,8 +44,31 @@ export type Action = {
     }) => Promise<Array<string>>;
 };
 
-export type Actions = {
-    [recordName: string]: Action;
+export type MirrorAction = ExtractAction & {
+    htmlFiles: string | Array<string>;
+};
+
+export type VisitAction = ExtractAction & {
+    init?:
+        | string
+        | (({
+              page,
+          }: {
+              page: Page;
+          }) => Promise<void>);
+    visit: ({
+        page,
+        action,
+    }: {
+        page: Page;
+        action: (action: string) => Promise<void>;
+    }) => Promise<void>;
+    undoVisit?: ({page}: {page: Page}) => Promise<void>;
+};
+
+export type BrowserAction = {
+    [key: string]: VisitAction;
+    start: VisitAction;
 };
 
 export type InternalOptions = {
@@ -94,6 +107,5 @@ export type PlayscrapeBrowser = {
 };
 
 export type Playscrape = {
-    actions: Actions;
     db: BetterSQLite3Database;
 };
