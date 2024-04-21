@@ -1,4 +1,5 @@
 import {promises as fs} from "node:fs";
+import path from "node:path";
 import {sql} from "drizzle-orm";
 import ora from "ora";
 
@@ -69,7 +70,7 @@ const handleExtract = async ({
     const action = actions[actionName];
 
     if (!action || !action.extract) {
-        return;
+        return false;
     }
 
     const extractSpinner = ora({
@@ -78,19 +79,22 @@ const handleExtract = async ({
     }).start();
 
     try {
-        const {query, queryAll, dom} = parseHTMLForXPath(content);
+        const {query, queryAll, queryText, queryAllText, dom} =
+            parseHTMLForXPath(content);
 
         const extracted = await action.extract({
             url,
             query,
             queryAll,
+            queryText,
+            queryAllText,
             dom,
             content,
         });
 
         if (!extracted) {
-            extractSpinner.fail(`No data extracted from ${url}.`);
-            return;
+            extractSpinner.warn("No data extracted.");
+            return false;
         }
 
         const extractedRecords = Array.isArray(extracted)
@@ -142,6 +146,8 @@ const handleExtract = async ({
                         dom,
                         query,
                         queryAll,
+                        queryText,
+                        queryAllText,
                         content,
                         cookies,
                         playscrape,
@@ -151,14 +157,16 @@ const handleExtract = async ({
             } catch (e) {
                 saveSpinner.fail("Failed to save record.");
                 console.error(e);
-                return;
+                return false;
             }
         }
     } catch (e) {
         extractSpinner.fail(`Failed to extract data from ${url}.`);
         console.error(e);
-        return;
+        return false;
     }
+
+    return true;
 };
 
 export const handleMirrorAction = async ({
@@ -172,30 +180,20 @@ export const handleMirrorAction = async ({
     options: InternalOptions;
     files: string[];
 }) => {
-    const {indent} = options;
-
+    const rootDir = process.cwd();
     for (const fileName of files) {
-        console.log(`Action (mirror): ${fileName}`);
+        console.log(`Action (mirror): ${path.relative(rootDir, fileName)}`);
 
-        const extractSpinner = ora({
-            text: "Extracting data...",
-            indent,
-        }).start();
+        let url = fileName;
 
-        try {
-            let url = fileName;
+        if (action.getURLFromFileName) {
+            url = action.getURLFromFileName(fileName);
+        }
 
-            if (action.getURLFromFileName) {
-                url = action.getURLFromFileName(fileName);
-            }
+        if (action.extract) {
+            const content = await fs.readFile(fileName, "utf8");
 
-            if (action.extract) {
-                const content = await fs.readFile(fileName, "utf8");
-
-                if (!content) {
-                    return;
-                }
-
+            if (content) {
                 await handleExtract({
                     content,
                     cookies: "",
@@ -205,12 +203,6 @@ export const handleMirrorAction = async ({
                     options,
                 });
             }
-
-            extractSpinner.succeed(`Extracted data from ${fileName}.`);
-        } catch (e) {
-            extractSpinner.fail(`Failed to extract data from ${fileName}.`);
-            console.error(e);
-            return;
         }
     }
 };
