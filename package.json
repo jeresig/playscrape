@@ -18,6 +18,7 @@
     "dev": "node --no-warnings --enable-source-maps --loader ts-node/esm src/playscrape.ts",
     "build-types": "tsc ./src/types.ts --declaration --emitDeclarationOnly --skipLibCheck --esModuleInterop --outDir dist/",
     "build": "tsc && yarn build-types && chmod +x dist/playscrape.js",
+    "build-watch": "nodemon --exec yarn build --watch src --ext js,ts,tsx",
     "release": "yarn build && changeset publish",
     "generate": "drizzle-kit generate:sqlite",
     "lint:ci": "biome check .",
@@ -50,6 +51,7 @@
     "@types/node": "^20.2.5",
     "@types/xmlserializer": "^0.6.5",
     "drizzle-kit": "^0.18.1",
+    "nodemon": "^3.1.0",
     "ts-node": "^10.9.1",
     "typescript": "^5.2.2"
   }
