@@ -1,6 +1,6 @@
 import {ObjectCannedACL} from "@aws-sdk/client-s3";
 import {BetterSQLite3Database} from "drizzle-orm/better-sqlite3";
-import {BrowserContext, Page} from "playwright";
+import {BrowserContext, Locator, Page} from "playwright";
 
 import {NewRecord} from "./schema.js";
 
@@ -48,7 +48,7 @@ export type MirrorAction = ExtractAction & {
     htmlFiles: string | Array<string>;
 };
 
-export type VisitAction = ExtractAction & {
+type InitAction = {
     init?:
         | string
         | (({
@@ -56,19 +56,35 @@ export type VisitAction = ExtractAction & {
           }: {
               page: Page;
           }) => Promise<void>);
-    visit: ({
-        page,
-        action,
-    }: {
-        page: Page;
-        action: (action: string) => Promise<void>;
-    }) => Promise<void>;
-    undoVisit?: ({page}: {page: Page}) => Promise<void>;
 };
 
+type VisitAction = ExtractAction &
+    InitAction & {
+        visit: ({
+            page,
+            action,
+        }: {
+            page: Page;
+            action: (action: string) => Promise<void>;
+        }) => Promise<void>;
+        undoVisit?: ({page}: {page: Page}) => Promise<void>;
+    };
+
+type VisitAllAction = ExtractAction &
+    InitAction & {
+        visitAll: ({
+            page,
+        }: {
+            page: Page;
+        }) => Promise<{action: string; links: Locator}>;
+    };
+
+type RequiredExtractAction = Required<Pick<ExtractAction, "extract">> &
+    ExtractAction;
+
 export type BrowserAction = {
-    [key: string]: VisitAction;
-    start: VisitAction;
+    [key: string]: VisitAction | VisitAllAction | RequiredExtractAction;
+    start: VisitAction | VisitAllAction | RequiredExtractAction;
 };
 
 export type InternalOptions = {

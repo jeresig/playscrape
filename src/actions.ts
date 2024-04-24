@@ -16,6 +16,8 @@ import {
 } from "./types.js";
 import {hash, wait} from "./utils.js";
 
+const INITIAL_BROWSER_ACTION = "start";
+
 const getPageContents = async ({
     playBrowser,
     options,
@@ -212,7 +214,7 @@ export const handleMirrorAction = async ({
 };
 
 export const handleBrowserAction = async ({
-    action: actionName = "start",
+    action: actionName = INITIAL_BROWSER_ACTION,
     actions,
     playBrowser,
     playscrape,
@@ -236,7 +238,7 @@ export const handleBrowserAction = async ({
         throw new Error(`Unknown action: ${actionName}`);
     }
 
-    if (action.init) {
+    if ("init" in action && action.init) {
         const initSpinner = ora({text: "Initializing...", indent}).start();
         try {
             if (typeof action.init === "string") {
@@ -275,14 +277,14 @@ export const handleBrowserAction = async ({
 
     const undoVisit = async () => {
         // If we're deeper in the stack, we need to go back.
-        if (action.undoVisit) {
+        if ("undoVisit" in action && action.undoVisit) {
             await action.undoVisit({page});
-        } else if (actionName !== "start") {
+        } else if (actionName !== INITIAL_BROWSER_ACTION) {
             await page.goBack();
         }
     };
 
-    if (action.visit) {
+    if ("visit" in action) {
         const visitSpinner = ora({text: "Visiting...", indent}).start();
         try {
             await action.visit({
@@ -302,6 +304,40 @@ export const handleBrowserAction = async ({
             });
         } catch (e) {
             visitSpinner.fail("Failed to visit.");
+            console.error(e);
+            return;
+        }
+    } else if ("visitAll" in action) {
+        try {
+            const {action: nextAction, links: linksLocator} =
+                await action.visitAll({page});
+
+            const links = await linksLocator.all();
+
+            for (const link of links) {
+                const visitSpinner = ora({
+                    text: "Visiting...",
+                    indent,
+                }).start();
+                try {
+                    await wait(delay);
+                    await link.click();
+                    await handleBrowserAction({
+                        action: nextAction,
+                        actions,
+                        playscrape,
+                        playBrowser,
+                        options,
+                    });
+                    await undoVisit();
+                    visitSpinner.succeed("Visited.");
+                } catch (e) {
+                    visitSpinner.fail("Failed to visit.");
+                    console.error(e);
+                    return;
+                }
+            }
+        } catch (e) {
             console.error(e);
             return;
         }
