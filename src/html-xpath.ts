@@ -11,6 +11,20 @@ export const parseHTMLToDom = (content: string) => {
     return new DOMParser().parseFromString(xhtml);
 };
 
+const textFromNode = (
+    node: Node | null | string | number | boolean,
+): string | null => {
+    return typeof node === "string" ||
+        typeof node === "number" ||
+        typeof node === "boolean"
+        ? String(node)
+        : xpath.isTextNode(node) || xpath.isAttribute(node)
+          ? node.nodeValue
+          : xpath.isElement(node)
+              ? node.textContent
+              : null;
+};
+
 export const parseHTMLForXPath = (content: string) => {
     const dom = parseHTMLToDom(content);
     const query = (query: string, root: Node = dom): Element | null => {
@@ -25,17 +39,14 @@ export const parseHTMLForXPath = (content: string) => {
         ) as Element[];
     };
     const queryText = (query: string, root: Node = dom): string | null => {
-        const results = xpath.select(query, root, true);
-        return xpath.isTextNode(results) ? results.nodeValue : null;
+        return textFromNode(xpath.select(query, root, true));
     };
     const queryAllText = (query: string, root: Node = dom): Array<string> => {
         const results = xpath.select(query, root, false);
         const resultsArray = Array.isArray(results) ? results : [results];
-        const textNodes = resultsArray.filter((node) =>
-            xpath.isTextNode(node),
-        ) as Text[];
-
-        return textNodes.map((node) => node.nodeValue) as string[];
+        return resultsArray
+            .map(textFromNode)
+            .filter((text) => text !== null) as string[];
     };
 
     return {

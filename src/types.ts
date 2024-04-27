@@ -48,7 +48,7 @@ export type MirrorAction = ExtractAction & {
     htmlFiles: string | Array<string>;
 };
 
-type InitAction = {
+type BaseBrowserAction = ExtractAction & {
     init?:
         | string
         | (({
@@ -56,28 +56,27 @@ type InitAction = {
           }: {
               page: Page;
           }) => Promise<void>);
+    next?: ({page}: {page: Page}) => Promise<boolean | Locator>;
 };
 
-type VisitAction = ExtractAction &
-    InitAction & {
-        visit: ({
-            page,
-            action,
-        }: {
-            page: Page;
-            action: (action: string) => Promise<void>;
-        }) => Promise<void>;
-        undoVisit?: ({page}: {page: Page}) => Promise<void>;
-    };
+type VisitAction = BaseBrowserAction & {
+    visit: ({
+        page,
+        action,
+    }: {
+        page: Page;
+        action: (action: string) => Promise<void>;
+    }) => Promise<void>;
+    undoVisit?: ({page}: {page: Page}) => Promise<void>;
+};
 
-type VisitAllAction = ExtractAction &
-    InitAction & {
-        visitAll: ({
-            page,
-        }: {
-            page: Page;
-        }) => Promise<{action: string; links: Locator}>;
-    };
+type VisitAllAction = BaseBrowserAction & {
+    visitAll: ({
+        page,
+    }: {
+        page: Page;
+    }) => Promise<{action: string; links: Locator}>;
+};
 
 type RequiredExtractAction = Required<Pick<ExtractAction, "extract">> &
     ExtractAction;

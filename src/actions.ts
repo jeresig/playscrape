@@ -289,11 +289,11 @@ export const handleBrowserAction = async ({
         try {
             await action.visit({
                 page,
-                action: async (action: string) => {
-                    visitSpinner.succeed("Visited.");
+                action: async (nextAction: string) => {
                     await wait(delay);
+                    visitSpinner.succeed("Visited.");
                     await handleBrowserAction({
-                        action,
+                        action: nextAction,
                         actions,
                         playscrape,
                         playBrowser,
@@ -322,6 +322,7 @@ export const handleBrowserAction = async ({
                 try {
                     await wait(delay);
                     await link.click();
+                    visitSpinner.succeed("Visited.");
                     await handleBrowserAction({
                         action: nextAction,
                         actions,
@@ -330,7 +331,6 @@ export const handleBrowserAction = async ({
                         options,
                     });
                     await undoVisit();
-                    visitSpinner.succeed("Visited.");
                 } catch (e) {
                     visitSpinner.fail("Failed to visit.");
                     console.error(e);
@@ -338,6 +338,44 @@ export const handleBrowserAction = async ({
                 }
             }
         } catch (e) {
+            console.error(e);
+            return;
+        }
+    }
+
+    if ("next" in action && action.next) {
+        const nextSpinner = ora({text: "Next...", indent}).start();
+        try {
+            await wait(delay);
+            const result = await action.next({page});
+
+            if (typeof result === "boolean") {
+                if (!result) {
+                    nextSpinner.succeed("No more results.");
+                    return;
+                }
+            } else {
+                const numMatches = await result.count();
+
+                if (numMatches === 0) {
+                    nextSpinner.succeed("No more results.");
+                    return;
+                }
+
+                await result.click();
+            }
+
+            nextSpinner.succeed("Next page.");
+
+            await handleBrowserAction({
+                action: actionName,
+                actions,
+                playscrape,
+                playBrowser,
+                options,
+            });
+        } catch (e) {
+            nextSpinner.fail("Failed to go to next.");
             console.error(e);
             return;
         }
