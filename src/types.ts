@@ -2,50 +2,29 @@ import {ObjectCannedACL} from "@aws-sdk/client-s3";
 import {BetterSQLite3Database} from "drizzle-orm/better-sqlite3";
 import {BrowserContext, Locator, Page} from "playwright";
 
+import {DomQuery} from "./html-xpath.js";
 import {NewRecord} from "./schema.js";
 
 export type ExtractAction = {
     getURLFromFileName?: (fileName: string) => string;
-    extract?: ({
-        dom,
-        query,
-        queryAll,
-        queryText,
-        queryAllText,
-        url,
-        content,
-    }: {
-        dom: Document;
-        query: (query: string, root?: Node) => Element | null;
-        queryAll: (query: string, root?: Node) => Array<Element>;
-        queryText: (query: string, root?: Node) => string | null;
-        queryAllText: (query: string, root?: Node) => Array<string>;
-        url: string;
-        content: string;
-    }) => Promise<any>;
-    downloadImages?: ({
-        record,
-        dom,
-        query,
-        queryAll,
-        queryText,
-        queryAllText,
-        url,
-        content,
-    }: {
-        record: NewRecord;
-        dom: Document;
-        query: (query: string, root?: Node) => Element | null;
-        queryAll: (query: string, root?: Node) => Array<Element>;
-        queryText: (query: string, root?: Node) => string | null;
-        queryAllText: (query: string, root?: Node) => Array<string>;
-        url: string;
-        content: string;
-    }) => Promise<Array<string>>;
+    extract?: (
+        options: DomQuery & {
+            url: string;
+            content: string;
+        },
+    ) => Promise<any>;
+    downloadImages?: (
+        options: DomQuery & {
+            record: NewRecord;
+            url: string;
+            content: string;
+        },
+    ) => Promise<Array<string>>;
 };
 
 export type MirrorAction = ExtractAction & {
     htmlFiles: string | Array<string>;
+    testFiles?: string | Array<string>;
 };
 
 type BaseBrowserAction = ExtractAction & {
@@ -57,6 +36,7 @@ type BaseBrowserAction = ExtractAction & {
               page: Page;
           }) => Promise<void>);
     next?: ({page}: {page: Page}) => Promise<boolean | Locator>;
+    testUrls?: Array<string>;
 };
 
 type VisitAction = BaseBrowserAction & {
@@ -89,6 +69,7 @@ export type BrowserAction = {
 export type InternalOptions = {
     debug: boolean;
     dryRun: boolean;
+    test: boolean;
     imageDir?: string;
     format: string;
     timeout: number;
@@ -97,7 +78,9 @@ export type InternalOptions = {
     overwrite: boolean;
     downloadTo: "local" | "s3";
     dbName: string;
-    exportFile?: string;
+    exportFile: string;
+    testDir: string;
+    outputDir: string;
     s3?: S3Options;
 };
 
@@ -110,9 +93,11 @@ export type S3Options = {
 export type Options = {
     format?: string;
     overwrite?: boolean;
-    dbName: string;
+    dbName?: string;
     exportFile?: string;
     imageDir?: string;
+    testDir?: string;
+    outputDir?: string;
     s3?: S3Options;
 };
 

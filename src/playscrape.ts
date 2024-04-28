@@ -1,5 +1,6 @@
 #!/usr/bin/env node
 import fs from "node:fs";
+import path from "node:path";
 import {Argument, Command} from "@commander-js/extra-typings";
 import ora from "ora";
 
@@ -40,7 +41,7 @@ const cli = new Command()
         new Argument(
             "<mode>",
             "update existing entries in DB, replace DB entirely, export DB to JSON.",
-        ).choices(["replace", "update", "export"]),
+        ).choices(["replace", "update", "export", "test"]),
     )
     .argument("<action_file>", "JS file defining the actions to perform.")
     .option("--config <path>", "path to configuration file")
@@ -101,16 +102,35 @@ const cli = new Command()
         process.exit(1);
     }
 
+    const outputDir =
+        importOptions.outputDir || path.dirname(resolvedActionFileName);
+    if (!fs.existsSync(outputDir)) {
+        fs.mkdirSync(outputDir, {recursive: true});
+    }
+    const dbName =
+        importOptions.dbName || path.join(outputDir, "playscrape.db");
+    const exportFile =
+        importOptions.exportFile || path.join(outputDir, "playscrape.json");
+    const testDir = importOptions.testDir || path.join(outputDir, "tests");
+    if (!fs.existsSync(testDir)) {
+        fs.mkdirSync(testDir, {recursive: true});
+    }
+
     const options: InternalOptions = {
         format: "jpg",
         debug: !!args.debug,
         dryRun: !!args.dryRun,
+        test: mode === "test",
         overwrite: !!args.overwrite,
         timeout: parseInt(args.timeout, 10),
         delay: parseInt(args.delay, 10),
         indent: 2,
         downloadTo: importOptions.s3 ? "s3" : "local",
         ...importOptions,
+        outputDir,
+        dbName,
+        exportFile,
+        testDir,
     };
 
     if (
@@ -141,7 +161,7 @@ const cli = new Command()
         resetSpinner.succeed("Database reset complete.");
     }
 
-    if (mode === "update" || mode === "replace") {
+    if (mode === "update" || mode === "replace" || mode === "test") {
         if (mirror) {
             await initMirror({db, options, action: mirror});
         } else if (browser) {

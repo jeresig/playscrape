@@ -1,6 +1,8 @@
-import {promises as fs} from "node:fs";
+import {existsSync, promises as fs} from "node:fs";
 import path from "node:path";
 import {sql} from "drizzle-orm";
+import {colorize} from "json-colorizer";
+import jsonDiff from "json-diff";
 import ora from "ora";
 
 import {downloadImages} from "./downloads.js";
@@ -16,7 +18,7 @@ import {
 } from "./types.js";
 import {hash, wait} from "./utils.js";
 
-const INITIAL_BROWSER_ACTION = "start";
+export const INITIAL_BROWSER_ACTION = "start";
 
 const getPageContents = async ({
     playBrowser,
@@ -54,6 +56,31 @@ const getPageContents = async ({
     }
 };
 
+const testRecord = async ({
+    id,
+    extracted,
+    options,
+}: {id: string; extracted: any; options: InternalOptions}) => {
+    const {testDir} = options;
+
+    const testFile = path.join(testDir, `${id}.json`);
+
+    if (existsSync(testFile)) {
+        const rawData = await fs.readFile(testFile, "utf8");
+        const data = JSON.parse(rawData);
+        const diff = jsonDiff.diffString(data, extracted);
+        if (/^[+-]/s.test(diff)) {
+            console.warn(`Diff found for ${id}`);
+            console.log(diff);
+        }
+    } else {
+        console.warn("Snapshot file not found, creating.");
+        console.log(colorize(extracted));
+    }
+
+    await fs.writeFile(testFile, JSON.stringify(extracted, null, 4), "utf8");
+};
+
 const handleExtract = async ({
     action,
     content,
@@ -71,7 +98,7 @@ const handleExtract = async ({
     playscrape: Playscrape;
     options: InternalOptions;
 }) => {
-    const {indent, dryRun} = options;
+    const {indent, dryRun, test} = options;
     const {db} = playscrape;
 
     if (!action || !action.extract) {
@@ -84,16 +111,11 @@ const handleExtract = async ({
     }).start();
 
     try {
-        const {query, queryAll, queryText, queryAllText, dom} =
-            parseHTMLForXPath(content);
+        const domQuery = parseHTMLForXPath(content);
 
         const extracted = await action.extract({
+            ...domQuery,
             url,
-            query,
-            queryAll,
-            queryText,
-            queryAllText,
-            dom,
             content,
         });
 
@@ -124,7 +146,10 @@ const handleExtract = async ({
 
                 if (dryRun) {
                     saveSpinner.succeed("DRY RUN: Record would be saved here.");
-                    console.log(JSON.stringify(extracted, null, 4));
+                    console.log(colorize(record));
+                } else if (test) {
+                    await testRecord({id: record.id, extracted, options});
+                    saveSpinner.succeed("Record tested.");
                 } else {
                     await db
                         .insert(records)
@@ -143,22 +168,16 @@ const handleExtract = async ({
                     saveSpinner.succeed("Saved record.");
                 }
 
-                if (!action.downloadImages) {
-                    await downloadImages({
-                        action,
-                        record,
-                        url,
-                        dom,
-                        query,
-                        queryAll,
-                        queryText,
-                        queryAllText,
-                        content,
-                        cookies,
-                        playscrape,
-                        options,
-                    });
-                }
+                await downloadImages({
+                    ...domQuery,
+                    action,
+                    record,
+                    url,
+                    content,
+                    cookies,
+                    playscrape,
+                    options,
+                });
             } catch (e) {
                 saveSpinner.fail("Failed to save record.");
                 console.error(e);
@@ -213,7 +232,7 @@ export const handleMirrorAction = async ({
     }
 };
 
-export const handleBrowserAction = async ({
+export const handleBrowserActionTest = async ({
     action: actionName = INITIAL_BROWSER_ACTION,
     actions,
     playBrowser,
@@ -226,11 +245,81 @@ export const handleBrowserAction = async ({
     playBrowser: PlayscrapeBrowser;
     options: InternalOptions;
 }) => {
+    const {indent} = options;
+    const {page} = playBrowser;
+    const action = actions[actionName];
+
+    if (!action) {
+        throw new Error(`Unknown action: ${actionName}`);
+    }
+
+    if (!action.extract) {
+        return;
+    }
+
+    console.log(`Test Action (${actionName})`);
+
+    if (
+        !("testUrls" in action && action.testUrls) ||
+        action.testUrls.length === 0
+    ) {
+        console.error("No test URLs defined for this action.");
+        return;
+    }
+
+    for (const url of action.testUrls) {
+        const initSpinner = ora({
+            text: `Loading test url: ${url}`,
+            indent,
+        }).start();
+        try {
+            await page.goto(url);
+            initSpinner.succeed(`Test url loaded: ${url}`);
+        } catch (e) {
+            initSpinner.fail(`Failed to load test url: ${url}`);
+            console.error(e);
+            return;
+        }
+
+        const {content, cookies} = await getPageContents({
+            playBrowser,
+            options,
+        });
+
+        if (!content) {
+            console.error("No content found.");
+            return;
+        }
+
+        await handleExtract({
+            action,
+            content,
+            cookies,
+            url,
+            playscrape,
+            actionName,
+            options,
+        });
+    }
+};
+
+export const handleBrowserAction = async ({
+    actionName = INITIAL_BROWSER_ACTION,
+    actions,
+    playBrowser,
+    playscrape,
+    options,
+}: {
+    actionName: string;
+    actions: BrowserAction;
+    playscrape: Playscrape;
+    playBrowser: PlayscrapeBrowser;
+    options: InternalOptions;
+}) => {
     const {indent, delay} = options;
     const {page} = playBrowser;
-    const url = page.url();
 
-    console.log(`Action (${actionName}): ${url}`);
+    console.log(`Action (${actionName})`);
 
     const action = actions[actionName];
 
@@ -253,6 +342,8 @@ export const handleBrowserAction = async ({
             return;
         }
     }
+
+    const url = page.url();
 
     if (action.extract) {
         const {content, cookies} = await getPageContents({
@@ -293,7 +384,7 @@ export const handleBrowserAction = async ({
                     await wait(delay);
                     visitSpinner.succeed("Visited.");
                     await handleBrowserAction({
-                        action: nextAction,
+                        actionName: nextAction,
                         actions,
                         playscrape,
                         playBrowser,
@@ -324,7 +415,7 @@ export const handleBrowserAction = async ({
                     await link.click();
                     visitSpinner.succeed("Visited.");
                     await handleBrowserAction({
-                        action: nextAction,
+                        actionName: nextAction,
                         actions,
                         playscrape,
                         playBrowser,
@@ -368,7 +459,7 @@ export const handleBrowserAction = async ({
             nextSpinner.succeed("Next page.");
 
             await handleBrowserAction({
-                action: actionName,
+                actionName: actionName,
                 actions,
                 playscrape,
                 playBrowser,

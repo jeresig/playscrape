@@ -2,7 +2,12 @@ import FastGlob from "fast-glob";
 import ora from "ora";
 import {chromium} from "playwright";
 
-import {handleBrowserAction, handleMirrorAction} from "./actions.js";
+import {
+    INITIAL_BROWSER_ACTION,
+    handleBrowserAction,
+    handleBrowserActionTest,
+    handleMirrorAction,
+} from "./actions.js";
 import {
     BrowserAction,
     InternalOptions,
@@ -41,14 +46,25 @@ export const initBrowser = async ({
 
         spinner.succeed("Browser started.");
 
-        // Start at the beginning
-        await handleBrowserAction({
-            action: "start",
-            actions,
-            playscrape,
-            playBrowser,
-            options,
-        });
+        if (options.test) {
+            for (const action of Object.keys(actions)) {
+                await handleBrowserActionTest({
+                    action,
+                    actions,
+                    playscrape,
+                    playBrowser,
+                    options,
+                });
+            }
+        } else {
+            await handleBrowserAction({
+                actionName: INITIAL_BROWSER_ACTION,
+                actions,
+                playscrape,
+                playBrowser,
+                options,
+            });
+        }
     } catch (e) {
         spinner.fail("Failed to launch browser.");
         console.error(e);
@@ -72,7 +88,9 @@ export const initMirror = async ({
             db,
         };
 
-        const patterns = action.htmlFiles || ["**/*.html"];
+        const patterns = (options.test
+            ? action.testFiles
+            : action.htmlFiles) || ["**/*.html"];
         const files = await FastGlob.glob(patterns);
 
         if (files.length === 0) {
@@ -82,7 +100,6 @@ export const initMirror = async ({
 
         spinner.succeed(`Found ${files.length} file(s) to extract from.`);
 
-        // Start at the beginning
         await handleMirrorAction({
             action,
             files,

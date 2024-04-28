@@ -3,6 +3,14 @@ import {parse} from "parse5";
 import xmlserializer from "xmlserializer";
 import xpath from "xpath";
 
+export type DomQuery = {
+    dom: Document;
+    query: (query: string, root?: Node) => Element | null;
+    queryAll: (query: string, root?: Node) => Array<Element>;
+    queryText: (query: string, root?: Node) => string | null;
+    queryAllText: (query: string, root?: Node) => Array<string>;
+};
+
 export const parseHTMLToDom = (content: string) => {
     const rawDom = parse(content);
     const xhtml = xmlserializer
@@ -25,7 +33,7 @@ const textFromNode = (
               : null;
 };
 
-export const parseHTMLForXPath = (content: string) => {
+export const parseHTMLForXPath = (content: string): DomQuery => {
     const dom = parseHTMLToDom(content);
     const query = (query: string, root: Node = dom): Element | null => {
         const results = xpath.select(query, root, true);

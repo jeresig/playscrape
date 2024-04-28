@@ -902,6 +902,13 @@
   resolved "https://registry.yarnpkg.com/@esbuild/linux-loong64/-/linux-loong64-0.15.18.tgz#128b76ecb9be48b60cf5cfc1c63a4f00691a3239"
   integrity sha512-L4jVKS82XVhw2nvzLg/19ClLWg0y27ulRwuP7lcyL6AbUWB5aPglXY3M21mauDQMDfRLs8cQmeT03r/+X3cZYQ==
 
+"@ewoudenberg/difflib@0.1.0":
+  version "0.1.0"
+  resolved "https://registry.yarnpkg.com/@ewoudenberg/difflib/-/difflib-0.1.0.tgz#a2ae5d3321ffa7c1b47691cf0db189d1264aaaa4"
+  integrity sha512-OU5P5mJyD3OoWYMWY+yIgwvgNS9cFAU10f+DDuvtogcWQOoJIsQ4Hy2McSfUfhKjq8L0FuWVb4Rt7kgA+XK86A==
+  dependencies:
+    heap ">= 0.2.0"
+
 "@jridgewell/resolve-uri@^3.0.3":
   version "3.1.2"
   resolved "https://registry.yarnpkg.com/@jridgewell/resolve-uri/-/resolve-uri-3.1.2.tgz#7a0ee601f60f99a20c7c7c5ff0c80388c1189bd6"
@@ -1459,6 +1466,11 @@
   dependencies:
     "@types/node" "*"
 
+"@types/json-diff@^1.0.3":
+  version "1.0.3"
+  resolved "https://registry.yarnpkg.com/@types/json-diff/-/json-diff-1.0.3.tgz#2d387d5a69560bc9b6cde52a5b9026fe54ea39d6"
+  integrity sha512-Qvxm8fpRMv/1zZR3sQWImeRK2mBYJji20xF51Fq9Gt//Ed18u0x6/FNLogLS1xhfUWTEmDyqveJqn95ltB6Kvw==
+
 "@types/minimist@^1.2.0":
   version "1.2.5"
   resolved "https://registry.yarnpkg.com/@types/minimist/-/minimist-1.2.5.tgz#ec10755e871497bcd83efe927e43ec46e8c0747e"
@@ -1919,6 +1931,16 @@ color@^4.2.3:
   dependencies:
     color-convert "^2.0.1"
     color-string "^1.9.0"
+
+colorette@^2.0.20:
+  version "2.0.20"
+  resolved "https://registry.yarnpkg.com/colorette/-/colorette-2.0.20.tgz#9eb793e6833067f7235902fcd3b09917a000a95a"
+  integrity sha512-IfEDxwoWIjkeXL1eXcDiow4UbKjhLdq6/EuSVR9GMN7KVH3r9gQ83e73hsz1Nd1T3ijd5xv1wcWRYO+D6kCI2w==
+
+colors@^1.4.0:
+  version "1.4.0"
+  resolved "https://registry.yarnpkg.com/colors/-/colors-1.4.0.tgz#c50491479d4c1bdaed2c9ced32cf7c7dc2360f78"
+  integrity sha512-a+UqTh4kgZg/SlGvfbzDHpgRu7AAQOmmqRHJnxhRZICKFUT91brVhNNt58CMWU9PsBbv3PDCZUHbVxuDiH2mtA==
 
 commander@^11.0.0:
   version "11.1.0"
@@ -3023,6 +3045,13 @@ js-yaml@^3.13.0, js-yaml@^3.13.1, js-yaml@^3.6.1:
     argparse "^1.0.7"
     esprima "^4.0.0"
 
+json-colorizer@^3.0.1:
+  version "3.0.1"
+  resolved "https://registry.yarnpkg.com/json-colorizer/-/json-colorizer-3.0.1.tgz#b6ca98de8e69f9d0c4e38f73fd1c0a6dec549d7c"
+  integrity sha512-4YyRAbD6eHeRnJD9vo0zjiU5fyY9QR6T+iYuH5DpO0XPThKWozpD4MaeY/8nLZIkHC3yEQMFLL+6P94E+JekDw==
+  dependencies:
+    colorette "^2.0.20"
+
 json-diff@0.9.0:
   version "0.9.0"
   resolved "https://registry.yarnpkg.com/json-diff/-/json-diff-0.9.0.tgz#e7c536798053cb409113d7403c774849e8a0d7ff"
@@ -3030,6 +3059,15 @@ json-diff@0.9.0:
   dependencies:
     cli-color "^2.0.0"
     difflib "~0.2.1"
+    dreamopt "~0.8.0"
+
+json-diff@^1.0.6:
+  version "1.0.6"
+  resolved "https://registry.yarnpkg.com/json-diff/-/json-diff-1.0.6.tgz#63690f695469b6437efaed5bb3d51f011f7cac28"
+  integrity sha512-tcFIPRdlc35YkYdGxcamJjllUhXWv4n2rK9oJ2RsAzV4FBkuV4ojKEDgcZ+kpKxDmJKv+PFK65+1tVVOnSeEqA==
+  dependencies:
+    "@ewoudenberg/difflib" "0.1.0"
+    colors "^1.4.0"
     dreamopt "~0.8.0"
 
 json-parse-even-better-errors@^2.3.0:
@@ -3475,7 +3513,7 @@ playwright-core@1.43.1:
   resolved "https://registry.yarnpkg.com/playwright-core/-/playwright-core-1.43.1.tgz#0eafef9994c69c02a1a3825a4343e56c99c03b02"
   integrity sha512-EI36Mto2Vrx6VF7rm708qSnesVQKbxEWvPrfA1IPY6HgczBplDx7ENtx+K2n4kJ41sLLkuGfmb0ZLSSXlDhqPg==
 
-playwright@^1.32.3:
+playwright@^1.43.1:
   version "1.43.1"
   resolved "https://registry.yarnpkg.com/playwright/-/playwright-1.43.1.tgz#8ad08984ac66c9ef3d0db035be54dd7ec9f1c7d9"
   integrity sha512-V7SoH0ai2kNt1Md9E3Gwas5B9m8KR2GVvwZnAI6Pg0m3sh7UvgiYhRrhsziCmqMJNouPckiOhk8T+9bSAK0VIA==
