@@ -89,7 +89,10 @@ export const downloadImage = async ({
     options: InternalOptions;
 }): Promise<NewDownload> => {
     const {format, dryRun, imageDir, overwrite, downloadTo, s3} = options;
-    const {id, fileName, isFileURL} = getImageIdAndFileName({url, format});
+    const {id, fileName, isFileURL} = getImageIdAndFileName({
+        url,
+        format: format || "jpg",
+    });
     const localFilePath = imageDir ? path.join(imageDir, fileName) : fileName;
     let image = null;
     let hasBeenDownloaded = false;
@@ -97,7 +100,7 @@ export const downloadImage = async ({
     // Check to see if the image has already been downloaded
 
     if (!overwrite) {
-        if (downloadTo === "local") {
+        if (downloadTo === "local" || !downloadTo) {
             if (fs.existsSync(localFilePath)) {
                 try {
                     image = sharp(localFilePath);
@@ -266,7 +269,7 @@ export const downloadImages = async ({
     options: InternalOptions;
 }) => {
     const {db} = playscrape;
-    const {delay, indent, dryRun} = options;
+    const {delay, indent, dryRun, test} = options;
 
     if (!action.downloadImages) {
         return;
@@ -283,6 +286,10 @@ export const downloadImages = async ({
             queryAllText,
             content,
         });
+
+        if (test) {
+            return;
+        }
 
         if (urls.length === 0) {
             console.warn("No images to download.");

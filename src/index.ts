@@ -1,6 +1,7 @@
+import fs from "node:fs";
 import FastGlob from "fast-glob";
 import ora from "ora";
-import {chromium} from "playwright";
+import {Browser, BrowserContext, chromium} from "playwright";
 
 import {
     INITIAL_BROWSER_ACTION,
@@ -8,6 +9,8 @@ import {
     handleBrowserActionTest,
     handleMirrorAction,
 } from "./actions.js";
+import {initDB} from "./db.js";
+import {records} from "./schema.js";
 import {
     BrowserAction,
     InternalOptions,
@@ -19,20 +22,26 @@ import {
 export * from "./types.js";
 export {initDB} from "./db.js";
 
-export const initBrowser = async ({
-    db,
+export const scrapeWithBrowser = async ({
     options,
     actions,
 }: {
-    db: Playscrape["db"];
     options: InternalOptions;
     actions: BrowserAction;
 }) => {
+    const db = initDB({
+        debug: options.debug,
+        dbName: options.dbName,
+    });
+
     const spinner = ora("Starting browser...").start();
 
+    let fullBrowser: Browser | null = null;
+    let browser: BrowserContext | null = null;
+
     try {
-        const fullBrowser = await chromium.launch();
-        const browser = await fullBrowser.newContext();
+        fullBrowser = await chromium.launch();
+        browser = await fullBrowser.newContext();
         const page = await browser.newPage();
 
         const playscrape: Playscrape = {
@@ -69,18 +78,24 @@ export const initBrowser = async ({
         spinner.fail("Failed to launch browser.");
         console.error(e);
         return;
+    } finally {
+        await browser?.close();
+        await fullBrowser?.close();
     }
 };
 
-export const initMirror = async ({
-    db,
+export const scrapeMirroredFiles = async ({
     options,
     action,
 }: {
-    db: Playscrape["db"];
     options: InternalOptions;
     action: MirrorAction;
 }) => {
+    const db = initDB({
+        debug: options.debug,
+        dbName: options.dbName,
+    });
+
     const spinner = ora("Finding mirrored files to extract from...").start();
 
     try {
@@ -108,6 +123,62 @@ export const initMirror = async ({
         });
     } catch (e) {
         spinner.fail("Failed to extract from mirror.");
+        console.error(e);
+        return;
+    }
+};
+
+export const exportRecords = async ({
+    options,
+}: {
+    options: InternalOptions;
+}) => {
+    if (!options.exportFile) {
+        console.error("No export file specified.");
+        return;
+    }
+
+    const db = initDB({
+        debug: options.debug,
+        dbName: options.dbName,
+    });
+
+    const spinner = ora("Exporting records...").start();
+
+    try {
+        const results = db
+            .select({
+                id: records.id,
+                url: records.url,
+                data: records.extracted,
+            })
+            .from(records)
+            .all();
+
+        const finalResults: Array<{
+            id: string;
+            url: string;
+        }> = [];
+
+        for (const result of results) {
+            finalResults.push({
+                id: result.id,
+                url: result.url,
+                ...(result.data ? JSON.parse(result.data) : null),
+            });
+        }
+
+        const resultString = JSON.stringify(finalResults);
+
+        if (options.exportFile) {
+            fs.writeFileSync(options.exportFile, resultString, "utf-8");
+        } else {
+            console.log(resultString);
+        }
+
+        spinner.succeed(`Exported ${finalResults.length} record(s).`);
+    } catch (e) {
+        spinner.fail("Failed to export records.");
         console.error(e);
         return;
     }

@@ -1,6 +1,6 @@
 import {createHash} from "node:crypto";
 
-export const wait = (timeout: number) =>
+export const wait = (timeout: number | undefined) =>
     new Promise<void>((resolve) => {
         setTimeout(() => {
             resolve();

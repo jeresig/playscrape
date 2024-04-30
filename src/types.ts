@@ -67,20 +67,19 @@ export type BrowserAction = {
 };
 
 export type InternalOptions = {
-    debug: boolean;
-    dryRun: boolean;
-    test: boolean;
+    debug?: boolean;
+    dryRun?: boolean;
+    test?: boolean;
     imageDir?: string;
-    format: string;
-    timeout: number;
-    delay: number;
-    indent: number;
-    overwrite: boolean;
-    downloadTo: "local" | "s3";
+    format?: string;
+    timeout?: number;
+    delay?: number;
+    indent?: number;
+    overwrite?: boolean;
+    downloadTo?: "local" | "s3";
     dbName: string;
-    exportFile: string;
-    testDir: string;
-    outputDir: string;
+    exportFile?: string;
+    testDir?: string;
     s3?: S3Options;
 };
 

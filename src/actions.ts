@@ -63,6 +63,11 @@ const testRecord = async ({
 }: {id: string; extracted: any; options: InternalOptions}) => {
     const {testDir} = options;
 
+    if (!testDir) {
+        console.error("Error: No test directory specified.");
+        process.exit(1);
+    }
+
     const testFile = path.join(testDir, `${id}.json`);
 
     if (existsSync(testFile)) {
@@ -70,8 +75,11 @@ const testRecord = async ({
         const data = JSON.parse(rawData);
         const diff = jsonDiff.diffString(data, extracted);
         if (/^[+-]/s.test(diff)) {
-            console.warn(`Diff found for ${id}`);
+            console.warn(`Data mismatch for: ${id}`);
             console.log(diff);
+            if (!options.overwrite) {
+                process.exit(1);
+            }
         }
     } else {
         console.warn("Snapshot file not found, creating.");
