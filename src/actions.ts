@@ -1,6 +1,6 @@
 import {existsSync, promises as fs} from "node:fs";
 import path from "node:path";
-import {sql} from "drizzle-orm";
+import {eq, sql} from "drizzle-orm";
 import {colorize} from "json-colorizer";
 import jsonDiff from "json-diff";
 import ora from "ora";
@@ -19,6 +19,7 @@ import {
 import {hash, wait} from "./utils.js";
 
 export const INITIAL_BROWSER_ACTION = "start";
+export const MIRROR_ACTION = "mirror";
 
 const getPageContents = async ({
     playBrowser,
@@ -89,7 +90,7 @@ const testRecord = async ({
     await fs.writeFile(testFile, JSON.stringify(extracted, null, 4), "utf8");
 };
 
-const handleExtract = async ({
+export const handleExtract = async ({
     action,
     content,
     url,
@@ -97,6 +98,7 @@ const handleExtract = async ({
     cookies,
     playscrape,
     options,
+    oldRecord,
 }: {
     action: ExtractAction;
     content: string;
@@ -105,6 +107,7 @@ const handleExtract = async ({
     cookies: string;
     playscrape: Playscrape;
     options: InternalOptions;
+    oldRecord?: NewRecord;
 }) => {
     const {indent, dryRun, test} = options;
     const {db} = playscrape;
@@ -153,12 +156,39 @@ const handleExtract = async ({
                 };
 
                 if (dryRun) {
-                    saveSpinner.succeed("DRY RUN: Record would be saved here.");
-                    console.log(colorize(record));
+                    if (oldRecord) {
+                        if (oldRecord.id !== record.id) {
+                            console.log(
+                                `DRY RUN: Record ID changed. (old: ${oldRecord.id}, new: ${record.id})`,
+                            );
+                        }
+                        if (oldRecord.extracted !== record.extracted) {
+                            const diff = jsonDiff.diffString(
+                                JSON.parse(oldRecord.extracted || "{}"),
+                                extracted,
+                            );
+                            console.log(
+                                `DRY RUN: Data updated for ${record.id}`,
+                            );
+                            console.log(diff);
+                        }
+                    } else {
+                        console.log("DRY RUN: Record would be saved here.");
+                        console.log(colorize(record));
+                    }
                 } else if (test) {
                     await testRecord({id: record.id, extracted, options});
                     saveSpinner.succeed("Record tested.");
                 } else {
+                    if (oldRecord && oldRecord.extracted !== record.extracted) {
+                        const diff = jsonDiff.diffString(
+                            JSON.parse(oldRecord.extracted || "{}"),
+                            extracted,
+                        );
+
+                        console.warn(`Data updated for ${record.id}`);
+                        console.log(diff);
+                    }
                     await db
                         .insert(records)
                         .values(record)
@@ -172,6 +202,16 @@ const handleExtract = async ({
                             },
                         })
                         .run();
+
+                    if (oldRecord && oldRecord.id !== record.id) {
+                        console.log(
+                            `Record ID changed. (old: ${oldRecord.id}, new: ${record.id})`,
+                        );
+                        await db
+                            .delete(records)
+                            .where(eq(records.id, oldRecord.id))
+                            .run();
+                    }
 
                     saveSpinner.succeed("Saved record.");
                 }
@@ -232,7 +272,7 @@ export const handleMirrorAction = async ({
                     cookies: "",
                     url,
                     playscrape,
-                    actionName: "mirror",
+                    actionName: MIRROR_ACTION,
                     options,
                 });
             }

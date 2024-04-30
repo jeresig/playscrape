@@ -7,12 +7,14 @@ import {
     INITIAL_BROWSER_ACTION,
     handleBrowserAction,
     handleBrowserActionTest,
+    handleExtract,
     handleMirrorAction,
 } from "./actions.js";
 import {initDB} from "./db.js";
 import {records} from "./schema.js";
 import {
     BrowserAction,
+    ExtractAction,
     InternalOptions,
     MirrorAction,
     Playscrape,
@@ -179,6 +181,77 @@ export const exportRecords = async ({
         spinner.succeed(`Exported ${finalResults.length} record(s).`);
     } catch (e) {
         spinner.fail("Failed to export records.");
+        console.error(e);
+        return;
+    }
+};
+
+export const reExtractData = async ({
+    options,
+    actions,
+}: {
+    actions: {
+        [actionName: string]: ExtractAction;
+    };
+    options: InternalOptions;
+}) => {
+    const db = initDB({
+        debug: options.debug,
+        dbName: options.dbName,
+    });
+
+    const spinner = ora("Re-extracting records...").start();
+
+    try {
+        let numUpdated = 0;
+
+        const results = db
+            .select({
+                id: records.id,
+                url: records.url,
+                action: records.action,
+                content: records.content,
+                cookies: records.cookies,
+                extracted: records.extracted,
+            })
+            .from(records)
+            .all();
+
+        for (const result of results) {
+            const {id, url, action: actionName, content, cookies} = result;
+            const action = actions[actionName];
+
+            if (!action) {
+                console.warn(`No action found for ${actionName}. Skipping.`);
+                continue;
+            }
+
+            if (!content) {
+                console.warn(`No contents found for ${id}. Skipping.`);
+                continue;
+            }
+
+            const playscrape: Playscrape = {
+                db,
+            };
+
+            await handleExtract({
+                action,
+                content,
+                url,
+                actionName,
+                cookies: cookies || "",
+                playscrape,
+                options,
+                oldRecord: result,
+            });
+
+            numUpdated += 1;
+        }
+
+        spinner.succeed(`Re-extracted ${numUpdated} record(s).`);
+    } catch (e) {
+        spinner.fail("Failed to re-extract records.");
         console.error(e);
         return;
     }

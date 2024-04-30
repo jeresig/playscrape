@@ -4,8 +4,10 @@ import path from "node:path";
 import {Command} from "@commander-js/extra-typings";
 import ora from "ora";
 
+import {MIRROR_ACTION} from "./actions.js";
 import {
     exportRecords,
+    reExtractData,
     scrapeMirroredFiles,
     scrapeWithBrowser,
 } from "./index.js";
@@ -186,6 +188,24 @@ cli.command("export")
     .action(async (fileName) => {
         const {options} = await parseActionFile(fileName, {});
         exportRecords({options});
+    });
+
+cli.command("extract")
+    .description("re-extract record data from a previous scrape.")
+    .argument("<action_file>", "JS file defining the actions to perform.")
+    .action(async (fileName) => {
+        const {options, browser, mirror} = await parseActionFile(fileName, {});
+
+        if (mirror) {
+            await reExtractData({
+                options,
+                actions: {
+                    [MIRROR_ACTION]: mirror,
+                },
+            });
+        } else if (browser) {
+            await reExtractData({options, actions: browser});
+        }
     });
 
 cli.command("test")
