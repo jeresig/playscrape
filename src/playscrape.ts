@@ -2,21 +2,17 @@
 import fs from "node:fs";
 import path from "node:path";
 import {Command} from "@commander-js/extra-typings";
-import ora from "ora";
 
-import {MIRROR_ACTION} from "./actions.js";
-import {
-    exportRecords,
-    reExtractData,
-    scrapeMirroredFiles,
-    scrapeWithBrowser,
-} from "./index.js";
+import {exportRecords} from "./actions/export.js";
+import {reExtractData} from "./actions/extract/extract.js";
+import {scrapeWithBrowser} from "./actions/scrape/browser.js";
+import {MIRROR_ACTION, scrapeMirroredFiles} from "./actions/scrape/mirror.js";
 import {
     BrowserAction,
     InternalOptions,
     MirrorAction,
     Options,
-} from "./types.js";
+} from "./shared/types.js";
 
 const parseActionFile = async (
     fileName: string,
@@ -122,7 +118,7 @@ const cli = new Command()
     )
     .version(process.env.npm_package_version ?? "0.0.0");
 
-cli.command("update")
+cli.command("scrape")
     .description("scrape and update existing entries in DB.")
     .argument("<action_file>", "JS file defining the actions to perform.")
     .option("--debug", "output extra debugging information")
@@ -139,41 +135,6 @@ cli.command("update")
             timeout: parseInt(args.timeout, 10),
             delay: parseInt(args.delay, 10),
         });
-
-        if (mirror) {
-            await scrapeMirroredFiles({options, action: mirror});
-        } else if (browser) {
-            await scrapeWithBrowser({options, actions: browser});
-        }
-    });
-
-cli.command("replace")
-    .description("scrape and replace existing entries in DB.")
-    .argument("<action_file>", "JS file defining the actions to perform.")
-    .option("--debug", "output extra debugging information")
-    .option("--dry-run", "do not save any data to the database or file system")
-    .option("--timeout <number>", "timeout in milliseconds", "60000")
-    .option("--delay <number>", "delay in milliseconds", "1000")
-    .option("--overwrite", "overwrite existing downloaded files")
-    .action(async (fileName, args) => {
-        const {browser, mirror, options} = await parseActionFile(fileName, {
-            debug: !!args.debug,
-            dryRun: !!args.dryRun,
-            test: false,
-            overwrite: !!args.overwrite,
-            timeout: parseInt(args.timeout, 10),
-            delay: parseInt(args.delay, 10),
-        });
-
-        const resetSpinner = ora({
-            text: "Resetting existing database...",
-        }).start();
-        if (options.dryRun) {
-            resetSpinner.warn("Database reset skipped due to --dry-run flag.");
-        } else if (fs.existsSync(options.dbName)) {
-            fs.rmSync(options.dbName);
-        }
-        resetSpinner.succeed("Database reset complete.");
 
         if (mirror) {
             await scrapeMirroredFiles({options, action: mirror});

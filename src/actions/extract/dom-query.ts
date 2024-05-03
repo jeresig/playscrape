@@ -1,7 +1,7 @@
 import {DOMParser} from "@xmldom/xmldom";
 import {parse} from "parse5";
-import xmlserializer from "xmlserializer";
-import xpath from "xpath";
+import * as xmlserializer from "xmlserializer";
+import * as xpath from "xpath";
 
 export type DomQuery = {
     dom: Document;
@@ -33,7 +33,7 @@ const textFromNode = (
               : null;
 };
 
-export const parseHTMLForXPath = (content: string): DomQuery => {
+export const getDomQuery = (content: string): DomQuery => {
     const dom = parseHTMLToDom(content);
     const query = (query: string, root: Node = dom): Element | null => {
         const results = xpath.select(query, root, true);

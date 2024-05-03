@@ -2,7 +2,7 @@ import {ObjectCannedACL} from "@aws-sdk/client-s3";
 import {BetterSQLite3Database} from "drizzle-orm/better-sqlite3";
 import {BrowserContext, Locator, Page} from "playwright";
 
-import {DomQuery} from "./html-xpath.js";
+import {DomQuery} from "../actions/extract/dom-query.js";
 import {NewRecord} from "./schema.js";
 
 export type ExtractAction = {
