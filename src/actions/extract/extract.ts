@@ -4,7 +4,7 @@ import * as jsonDiff from "json-diff";
 import ora from "ora";
 
 import {initDB} from "../../shared/db.js";
-import {NewRecord, records} from "../../shared/schema.js";
+import {NewRecord, Record, records} from "../../shared/schema.js";
 import {
     ExtractAction,
     InternalOptions,
@@ -32,7 +32,7 @@ export const handleExtract = async ({
     cookies: string;
     playscrape: Playscrape;
     options: InternalOptions;
-    oldRecord?: NewRecord;
+    oldRecord?: Record;
 }) => {
     const {indent, dryRun, test} = options;
     const {db} = playscrape;
@@ -89,7 +89,7 @@ export const handleExtract = async ({
                         }
                         if (oldRecord.extracted !== record.extracted) {
                             const diff = jsonDiff.diffString(
-                                JSON.parse(oldRecord.extracted || "{}"),
+                                oldRecord.extracted,
                                 extracted,
                             );
                             console.log(
@@ -107,7 +107,7 @@ export const handleExtract = async ({
                 } else {
                     if (oldRecord && oldRecord.extracted !== record.extracted) {
                         const diff = jsonDiff.diffString(
-                            JSON.parse(oldRecord.extracted || "{}"),
+                            oldRecord.extracted,
                             extracted,
                         );
 
@@ -185,17 +185,7 @@ export const reExtractData = async ({
     try {
         let numUpdated = 0;
 
-        const results = db
-            .select({
-                id: records.id,
-                url: records.url,
-                action: records.action,
-                content: records.content,
-                cookies: records.cookies,
-                extracted: records.extracted,
-            })
-            .from(records)
-            .all();
+        const results = db.select().from(records).all();
 
         for (const result of results) {
             const {id, url, action: actionName, content, cookies} = result;

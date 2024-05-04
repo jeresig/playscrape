@@ -306,7 +306,7 @@ export const downloadImages = async ({
             }).start();
             try {
                 const hashedUrl = hash(url);
-                const existingDownload: Download = await db
+                const existingDownload: Download | undefined = await db
                     .select()
                     .from(downloads)
                     .where(eq(downloads.id, hashedUrl))

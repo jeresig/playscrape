@@ -40,7 +40,7 @@ export const exportRecords = async ({
             finalResults.push({
                 id: result.id,
                 url: result.url,
-                ...(result.data ? JSON.parse(result.data) : null),
+                ...(result.data ? result.data : null),
             });
         }
 

@@ -1676,10 +1676,10 @@ better-path-resolve@1.0.0:
   dependencies:
     is-windows "^1.0.0"
 
-better-sqlite3@^8.4.0:
-  version "8.7.0"
-  resolved "https://registry.yarnpkg.com/better-sqlite3/-/better-sqlite3-8.7.0.tgz#bcc341856187b1d110a8a47234fa89c48c8ef538"
-  integrity sha512-99jZU4le+f3G6aIl6PmmV0cxUIWqKieHxsiF7G34CVFiE+/UabpYqkU0NJIkY/96mQKikHeBjtR27vFfs5JpEw==
+better-sqlite3@^9.6.0:
+  version "9.6.0"
+  resolved "https://registry.yarnpkg.com/better-sqlite3/-/better-sqlite3-9.6.0.tgz#b01e58ba7c48abcdc0383b8301206ee2ab81d271"
+  integrity sha512-yR5HATnqeYNVnkaUTf4bOP2dJSnyhP4puJN/QPRyx4YkBEEUxib422n2XzPqDEHjQQqazoYoADdAm5vE15+dAQ==
   dependencies:
     bindings "^1.5.0"
     prebuild-install "^7.1.1"
@@ -2140,10 +2140,10 @@ drizzle-kit@^0.18.1:
     minimatch "^7.4.3"
     zod "^3.20.2"
 
-drizzle-orm@^0.26.5:
-  version "0.26.5"
-  resolved "https://registry.yarnpkg.com/drizzle-orm/-/drizzle-orm-0.26.5.tgz#cf0024e5a83134eb762b20c76f7c55b49bc6c73e"
-  integrity sha512-ajjbOIoXqldWoWBn0RbVQCCT732R4Ad+gUjUrlmMpzWYwgnbG/qqPy84NhHntQ/MR//z3xfvT1Z2fD8uCAPX3g==
+drizzle-orm@^0.30.10:
+  version "0.30.10"
+  resolved "https://registry.yarnpkg.com/drizzle-orm/-/drizzle-orm-0.30.10.tgz#1ae29d9d8e8fb5422e050e155c441854033ef13f"
+  integrity sha512-IRy/QmMWw9lAQHpwbUh1b8fcn27S/a9zMIzqea1WNOxK9/4EB8gIo+FZWLiPXzl2n9ixGSv8BhsLZiOppWEwBw==
 
 emoji-regex@^8.0.0:
   version "8.0.0"
