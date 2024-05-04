@@ -1,6 +1,6 @@
 import {eq, sql} from "drizzle-orm";
 import {colorize} from "json-colorizer";
-import jsonDiff from "json-diff";
+import * as jsonDiff from "json-diff";
 import ora from "ora";
 
 import {initDB} from "../../shared/db.js";

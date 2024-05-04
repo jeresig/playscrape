@@ -1503,7 +1503,7 @@
   resolved "https://registry.yarnpkg.com/@types/semver/-/semver-7.5.8.tgz#8268a8c57a3e4abd25c165ecd36237db7948a55e"
   integrity sha512-I8EUhyrgfLrcTkzV3TSsGyl1tSuPrEDzr0yd5m90UgNxQkyDXULk3b6MlQqTCpZpNtWe1K0hzclnZkTcLBe2UQ==
 
-"@types/xmlserializer@^0.6.5":
+"@types/xmlserializer@^0.6.6":
   version "0.6.6"
   resolved "https://registry.yarnpkg.com/@types/xmlserializer/-/xmlserializer-0.6.6.tgz#ee6be31efcd84b4f34f7e85b7e105bfdc2d78838"
   integrity sha512-FmDkyzB7aZXDMVx+ODVig/QZDUYA5+pa8a0ljBjBaKEsdsB1l5xCj1+Ex6YE/4K1v5VbSPPfft0tLEGxXg5uqw==

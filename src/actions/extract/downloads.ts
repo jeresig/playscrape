@@ -7,7 +7,7 @@ import {GetObjectCommand, PutObjectCommand, S3Client} from "@aws-sdk/client-s3";
 import {eq, sql} from "drizzle-orm";
 import mime from "mime/lite";
 import ora from "ora";
-import sharp from "sharp";
+import sharp, {Sharp} from "sharp";
 
 import {
     Download,
@@ -97,7 +97,7 @@ export const downloadImage = async ({
         format: format || "jpg",
     });
     const localFilePath = imageDir ? path.join(imageDir, fileName) : fileName;
-    let image = null;
+    let image: Sharp | null = null;
     let hasBeenDownloaded = false;
 
     // Check to see if the image has already been downloaded
@@ -129,7 +129,7 @@ export const downloadImage = async ({
 
                 if (Body) {
                     const stream = Body as IncomingMessage;
-                    const buffers = [];
+                    const buffers: Array<any> = [];
 
                     for await (const chunk of stream) {
                         buffers.push(chunk);
