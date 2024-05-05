@@ -1,0 +1,5 @@
+---
+"playscrape": patch
+---
+
+Upgrade dependencies.
