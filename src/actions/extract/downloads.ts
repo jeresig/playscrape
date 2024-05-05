@@ -9,12 +9,8 @@ import mime from "mime/lite";
 import ora from "ora";
 import sharp, {Sharp} from "sharp";
 
-import {
-    Download,
-    NewDownload,
-    NewRecord,
-    downloads,
-} from "../../shared/schema.js";
+import {Download, NewDownload, NewRecord} from "../../shared/schema.js";
+import {downloads} from "../../shared/schema.js";
 import {
     ExtractAction,
     InternalOptions,
@@ -22,6 +18,7 @@ import {
     S3Options,
 } from "../../shared/types.js";
 import {hash, wait} from "../../shared/utils.js";
+import {DomQuery} from "./dom-query.js";
 
 let s3Client: S3Client | null = null;
 
@@ -257,14 +254,9 @@ export const downloadImages = async ({
     cookies,
     playscrape,
     options,
-}: {
+}: DomQuery & {
     action: ExtractAction;
     record: NewRecord;
-    dom: Document;
-    query: (query: string) => Element | null;
-    queryAll: (query: string) => Array<Element>;
-    queryText: (query: string, root?: Node) => string | null;
-    queryAllText: (query: string, root?: Node) => Array<string>;
     url: string;
     content: string;
     cookies: string | null;
@@ -278,83 +270,68 @@ export const downloadImages = async ({
         return;
     }
 
-    try {
-        const urls = await action.downloadImages({
-            record,
-            url,
-            dom,
-            query,
-            queryAll,
-            queryText,
-            queryAllText,
-            content,
-        });
+    const urls = await action.downloadImages({
+        record,
+        url,
+        dom,
+        query,
+        queryAll,
+        queryText,
+        queryAllText,
+        content,
+    });
 
-        if (test) {
-            return;
-        }
-
-        if (urls.length === 0) {
-            console.warn("No images to download.");
-            return;
-        }
-
-        for (const url of urls) {
-            const downloadImageSpinner = ora({
-                text: `Downloading Image from ${url}`,
-                indent,
-            }).start();
-            try {
-                const hashedUrl = hash(url);
-                const existingDownload: Download | undefined = await db
-                    .select()
-                    .from(downloads)
-                    .where(eq(downloads.id, hashedUrl))
-                    .get();
-
-                if (existingDownload) {
-                    downloadImageSpinner.succeed(
-                        `Image already downloaded: ${url}`,
-                    );
-                } else {
-                    await wait(delay);
-
-                    const imageDetails = await downloadImage({
-                        recordId: record.id,
-                        url,
-                        cookies,
-                        options,
-                    });
-
-                    if (dryRun) {
-                        downloadImageSpinner.succeed(
-                            `DRY RUN: Image downloaded: ${url}`,
-                        );
-                        continue;
-                    }
-
-                    await db
-                        .insert(downloads)
-                        .values(imageDetails)
-                        .onConflictDoUpdate({
-                            target: downloads.id,
-                            set: {
-                                ...imageDetails,
-                                updated_at: sql`CURRENT_TIMESTAMP`,
-                            },
-                        })
-                        .run();
-
-                    downloadImageSpinner.succeed(`Image downloaded: ${url}`);
-                }
-            } catch (e) {
-                downloadImageSpinner.fail(`Failed to download: ${url}`);
-                console.error(e);
-                return;
-            }
-        }
-    } catch (e) {
-        console.error(e);
+    if (test) {
         return;
+    }
+
+    if (urls.length === 0) {
+        console.warn("No images to download.");
+        return;
+    }
+
+    for (const url of urls) {
+        const downloadImageSpinner = ora({
+            text: `Downloading Image from ${url}`,
+            indent,
+        }).start();
+        const hashedUrl = hash(url);
+        const existingDownload: Download | undefined =
+            await db.query.downloads.findFirst({
+                where: eq(downloads.id, hashedUrl),
+            });
+
+        if (existingDownload) {
+            downloadImageSpinner.succeed(`Image already downloaded: ${url}`);
+        } else {
+            await wait(delay);
+
+            const imageDetails = await downloadImage({
+                recordId: record.id,
+                url,
+                cookies,
+                options,
+            });
+
+            if (dryRun) {
+                downloadImageSpinner.succeed(
+                    `DRY RUN: Image downloaded: ${url}`,
+                );
+                continue;
+            }
+
+            await db
+                .insert(downloads)
+                .values(imageDetails)
+                .onConflictDoUpdate({
+                    target: downloads.id,
+                    set: {
+                        ...imageDetails,
+                        updated_at: sql`CURRENT_TIMESTAMP`,
+                    },
+                });
+
+            downloadImageSpinner.succeed(`Image downloaded: ${url}`);
+        }
     }
 };

@@ -6,6 +6,7 @@ import ora from "ora";
 import {initDB} from "../../shared/db.js";
 import {InternalOptions, MirrorAction, Playscrape} from "../../shared/types.js";
 import {handleExtract} from "../extract/extract.js";
+import {endScrape, startScrape} from "./scrape.js";
 
 export const MIRROR_ACTION = "mirror";
 
@@ -21,21 +22,22 @@ export const scrapeMirroredFiles = async ({
         dbName: options.dbName,
     });
 
+    const playscrape: Playscrape = {
+        db,
+    };
+
     const spinner = ora("Finding mirrored files to extract from...").start();
 
-    try {
-        const playscrape: Playscrape = {
-            db,
-        };
+    startScrape({playscrape, options});
 
+    try {
         const patterns = (options.test
             ? action.testFiles
             : action.htmlFiles) || ["**/*.html"];
         const files = await FastGlob.glob(patterns);
 
         if (files.length === 0) {
-            spinner.fail("No files found to extract from.");
-            return;
+            throw new Error("No files found to extract from.");
         }
 
         spinner.succeed(`Found ${files.length} file(s) to extract from.`);
@@ -46,10 +48,18 @@ export const scrapeMirroredFiles = async ({
             playscrape,
             options,
         });
+
+        endScrape({playscrape, options, status: "completed"});
     } catch (e) {
+        endScrape({
+            playscrape,
+            options,
+            status: "failed",
+            statusText: e.message,
+        });
         spinner.fail("Failed to extract from mirror.");
         console.error(e);
-        return;
+        process.exit(1);
     }
 };
 

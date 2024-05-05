@@ -10,6 +10,7 @@ import {
 } from "../../shared/types.js";
 import {wait} from "../../shared/utils.js";
 import {handleExtract} from "../extract/extract.js";
+import {endScrape, startScrape} from "./scrape.js";
 
 export const INITIAL_BROWSER_ACTION = "start";
 
@@ -39,18 +40,12 @@ export const handleBrowserAction = async ({
 
     if ("init" in action && action.init) {
         const initSpinner = ora({text: "Initializing...", indent}).start();
-        try {
-            if (typeof action.init === "string") {
-                await page.goto(action.init);
-            } else {
-                await action.init({page});
-            }
-            initSpinner.succeed("Initialized.");
-        } catch (e) {
-            initSpinner.fail("Failed to initialize.");
-            console.error(e);
-            return;
+        if (typeof action.init === "string") {
+            await page.goto(action.init);
+        } else {
+            await action.init({page});
         }
+        initSpinner.succeed("Initialized.");
     }
 
     const url = page.url();
@@ -60,10 +55,6 @@ export const handleBrowserAction = async ({
             playBrowser,
             options,
         });
-
-        if (!content) {
-            return;
-        }
 
         await handleExtract({
             action,
@@ -87,99 +78,77 @@ export const handleBrowserAction = async ({
 
     if ("visit" in action) {
         const visitSpinner = ora({text: "Visiting...", indent}).start();
-        try {
-            await action.visit({
-                page,
-                action: async (nextAction: string) => {
-                    await wait(delay);
-                    visitSpinner.succeed("Visited.");
-                    await handleBrowserAction({
-                        actionName: nextAction,
-                        actions,
-                        playscrape,
-                        playBrowser,
-                        options,
-                    });
-                    await undoVisit();
-                },
-            });
-        } catch (e) {
-            visitSpinner.fail("Failed to visit.");
-            console.error(e);
-            return;
-        }
+        await action.visit({
+            page,
+            action: async (nextAction: string) => {
+                await wait(delay);
+                visitSpinner.succeed("Visited.");
+                await handleBrowserAction({
+                    actionName: nextAction,
+                    actions,
+                    playscrape,
+                    playBrowser,
+                    options,
+                });
+                await undoVisit();
+            },
+        });
     } else if ("visitAll" in action) {
-        try {
-            const {action: nextAction, links: linksLocator} =
-                await action.visitAll({page});
+        const {action: nextAction, links: linksLocator} = await action.visitAll(
+            {page},
+        );
 
-            const links = await linksLocator.all();
+        const links = await linksLocator.all();
 
-            for (const link of links) {
-                const visitSpinner = ora({
-                    text: "Visiting...",
-                    indent,
-                }).start();
-                try {
-                    await wait(delay);
-                    await link.click();
-                    visitSpinner.succeed("Visited.");
-                    await handleBrowserAction({
-                        actionName: nextAction,
-                        actions,
-                        playscrape,
-                        playBrowser,
-                        options,
-                    });
-                    await undoVisit();
-                } catch (e) {
-                    visitSpinner.fail("Failed to visit.");
-                    console.error(e);
-                    return;
-                }
-            }
-        } catch (e) {
-            console.error(e);
-            return;
-        }
-    }
-
-    if ("next" in action && action.next) {
-        const nextSpinner = ora({text: "Next...", indent}).start();
-        try {
+        for (const link of links) {
+            const visitSpinner = ora({
+                text: "Visiting...",
+                indent,
+            }).start();
             await wait(delay);
-            const result = await action.next({page});
-
-            if (typeof result === "boolean") {
-                if (!result) {
-                    nextSpinner.succeed("No more results.");
-                    return;
-                }
-            } else {
-                const numMatches = await result.count();
-
-                if (numMatches === 0) {
-                    nextSpinner.succeed("No more results.");
-                    return;
-                }
-
-                await result.click();
-            }
-
-            nextSpinner.succeed("Next page.");
-
+            await link.click();
+            visitSpinner.succeed("Visited.");
             await handleBrowserAction({
-                actionName: actionName,
+                actionName: nextAction,
                 actions,
                 playscrape,
                 playBrowser,
                 options,
             });
-        } catch (e) {
-            nextSpinner.fail("Failed to go to next.");
-            console.error(e);
-            return;
+            await undoVisit();
         }
+    }
+
+    if ("next" in action && action.next) {
+        const nextSpinner = ora({text: "Next...", indent}).start();
+        await wait(delay);
+        const result = await action.next({page});
+
+        if (typeof result === "boolean") {
+            if (!result) {
+                nextSpinner.succeed("No more results.");
+                return;
+            }
+        } else {
+            const numMatches = await result.count();
+
+            if (numMatches === 0) {
+                nextSpinner.succeed("No more results.");
+                return;
+            }
+
+            await result.click();
+        }
+
+        nextSpinner.succeed("Next page.");
+
+        await handleBrowserAction({
+            actionName: actionName,
+            actions,
+            playscrape,
+            playBrowser,
+            options,
+        });
     }
 };
 
@@ -195,19 +164,21 @@ export const scrapeWithBrowser = async ({
         dbName: options.dbName,
     });
 
+    const playscrape: Playscrape = {
+        db,
+    };
+
     const spinner = ora("Starting browser...").start();
 
     let fullBrowser: Browser | null = null;
     let browser: BrowserContext | null = null;
 
+    startScrape({playscrape, options});
+
     try {
         fullBrowser = await chromium.launch();
         browser = await fullBrowser.newContext();
         const page = await browser.newPage();
-
-        const playscrape: Playscrape = {
-            db,
-        };
 
         const playBrowser: PlayscrapeBrowser = {
             browser: browser,
@@ -234,11 +205,18 @@ export const scrapeWithBrowser = async ({
                 playBrowser,
                 options,
             });
+            endScrape({playscrape, options, status: "completed"});
         }
     } catch (e) {
-        spinner.fail("Failed to launch browser.");
+        endScrape({
+            playscrape,
+            options,
+            status: "failed",
+            statusText: e.message,
+        });
+        spinner.fail("Failed to scrape with browser.");
         console.error(e);
-        return;
+        process.exit(1);
     } finally {
         await browser?.close();
         await fullBrowser?.close();
@@ -267,7 +245,7 @@ export const handleBrowserActionTest = async ({
     }
 
     if (!action.extract) {
-        return;
+        throw new Error("No extract function defined for this action.");
     }
 
     console.log(`Test Action (${actionName})`);
@@ -276,8 +254,7 @@ export const handleBrowserActionTest = async ({
         !("testUrls" in action && action.testUrls) ||
         action.testUrls.length === 0
     ) {
-        console.error("No test URLs defined for this action.");
-        return;
+        throw new Error("No test URLs defined for this action.");
     }
 
     for (const url of action.testUrls) {
@@ -285,24 +262,13 @@ export const handleBrowserActionTest = async ({
             text: `Loading test url: ${url}`,
             indent,
         }).start();
-        try {
-            await page.goto(url);
-            initSpinner.succeed(`Test url loaded: ${url}`);
-        } catch (e) {
-            initSpinner.fail(`Failed to load test url: ${url}`);
-            console.error(e);
-            return;
-        }
+        await page.goto(url);
+        initSpinner.succeed(`Test url loaded: ${url}`);
 
         const {content, cookies} = await getPageContents({
             playBrowser,
             options,
         });
-
-        if (!content) {
-            console.error("No content found.");
-            return;
-        }
 
         await handleExtract({
             action,
@@ -315,6 +281,7 @@ export const handleBrowserActionTest = async ({
         });
     }
 };
+
 export const getPageContents = async ({
     playBrowser,
     options,
@@ -330,23 +297,17 @@ export const getPageContents = async ({
         indent,
     }).start();
 
-    try {
-        await page.waitForLoadState("domcontentloaded");
-        const content = await page.content();
-        const cookies = (await browser.cookies())
-            .map(
-                (cookie) =>
-                    `${encodeURIComponent(cookie.name)}=${encodeURIComponent(
-                        cookie.value,
-                    )}`,
-            )
-            .join("; ");
-        extractSpinner.succeed("Downloaded page data.");
+    await page.waitForLoadState("domcontentloaded");
+    const content = await page.content();
+    const cookies = (await browser.cookies())
+        .map(
+            (cookie) =>
+                `${encodeURIComponent(cookie.name)}=${encodeURIComponent(
+                    cookie.value,
+                )}`,
+        )
+        .join("; ");
+    extractSpinner.succeed("Downloaded page data.");
 
-        return {content, cookies};
-    } catch (e) {
-        extractSpinner.fail("Failed to download page data.");
-        console.error(e);
-        return {content: "", cookies: ""};
-    }
+    return {content, cookies};
 };

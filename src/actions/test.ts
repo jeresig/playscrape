@@ -12,17 +12,17 @@ export const testRecord = async ({
     const {testDir} = options;
 
     if (!testDir) {
-        console.error("Error: No test directory specified.");
-        process.exit(1);
+        throw new Error("Error: No test directory specified.");
     }
 
     const testFile = path.join(testDir, `${id}.json`);
+    const extractedFormatted = JSON.stringify(extracted, null, 4);
 
     if (existsSync(testFile)) {
         const rawData = await fs.readFile(testFile, "utf8");
         const data = JSON.parse(rawData);
         const diff = jsonDiff.diffString(data, extracted);
-        if (/^[+-]/s.test(diff)) {
+        if (rawData !== extractedFormatted) {
             console.warn(`Data mismatch for: ${id}`);
             console.log(diff);
             if (!options.overwrite) {
@@ -34,5 +34,5 @@ export const testRecord = async ({
         console.log(colorize(extracted));
     }
 
-    await fs.writeFile(testFile, JSON.stringify(extracted, null, 4), "utf8");
+    await fs.writeFile(testFile, extractedFormatted, "utf8");
 };

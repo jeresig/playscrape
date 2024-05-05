@@ -4,7 +4,8 @@ import * as jsonDiff from "json-diff";
 import ora from "ora";
 
 import {initDB} from "../../shared/db.js";
-import {NewRecord, Record, records} from "../../shared/schema.js";
+import {NewRecord, Record} from "../../shared/schema.js";
+import {records, scrapeRecords} from "../../shared/schema.js";
 import {
     ExtractAction,
     InternalOptions,
@@ -46,6 +47,12 @@ export const handleExtract = async ({
         indent,
     }).start();
 
+    if (oldRecord) {
+        playscrape.currentRecordId = oldRecord.id;
+    }
+
+    startRecordScrape({playscrape, options});
+
     try {
         const domQuery = getDomQuery(content);
 
@@ -56,6 +63,12 @@ export const handleExtract = async ({
         });
 
         if (!extracted) {
+            endRecordScrape({
+                playscrape,
+                options,
+                status: "failed",
+                statusText: "No data extracted.",
+            });
             extractSpinner.warn("No data extracted.");
             return false;
         }
@@ -69,95 +82,127 @@ export const handleExtract = async ({
         );
 
         for (const extracted of extractedRecords) {
-            const saveSpinner = ora({text: "Saving record...", indent}).start();
-            try {
-                const record: NewRecord = {
-                    id: extracted.id || hash(extracted.url || url),
-                    url: extracted.url || url,
-                    action: actionName,
-                    content,
-                    cookies,
-                    extracted: JSON.stringify(extracted),
-                };
+            const record: NewRecord = {
+                id: extracted.id || hash(extracted.url || url),
+                url: extracted.url || url,
+                action: actionName,
+                content,
+                cookies,
+                extracted,
+            };
 
-                if (dryRun) {
-                    if (oldRecord) {
-                        if (oldRecord.id !== record.id) {
-                            console.log(
-                                `DRY RUN: Record ID changed. (old: ${oldRecord.id}, new: ${record.id})`,
-                            );
-                        }
-                        if (oldRecord.extracted !== record.extracted) {
-                            const diff = jsonDiff.diffString(
-                                oldRecord.extracted,
-                                extracted,
-                            );
-                            console.log(
-                                `DRY RUN: Data updated for ${record.id}`,
-                            );
-                            console.log(diff);
-                        }
-                    } else {
-                        console.log("DRY RUN: Record would be saved here.");
-                        console.log(colorize(record));
+            playscrape.currentRecordId = record.id;
+
+            if (!playscrape.currentRecordScrapeId) {
+                startRecordScrape({playscrape, options});
+            }
+
+            // Download the images first, so that we don't save the record
+            // if the images fail to download.
+            await downloadImages({
+                ...domQuery,
+                action,
+                record,
+                url,
+                content,
+                cookies,
+                playscrape,
+                options,
+            });
+
+            const saveSpinner = ora({text: "Saving record...", indent}).start();
+
+            let status: "created" | "noChanges" | "updated" = "created";
+            let statusText: string | undefined;
+
+            if (dryRun) {
+                if (oldRecord) {
+                    if (oldRecord.id !== record.id) {
+                        console.log(
+                            `DRY RUN: Record ID changed. (old: ${oldRecord.id}, new: ${record.id})`,
+                        );
                     }
-                } else if (test) {
-                    await testRecord({id: record.id, extracted, options});
-                    saveSpinner.succeed("Record tested.");
-                } else {
-                    if (oldRecord && oldRecord.extracted !== record.extracted) {
+                    if (oldRecord.extracted !== record.extracted) {
                         const diff = jsonDiff.diffString(
                             oldRecord.extracted,
                             extracted,
                         );
-
-                        console.warn(`Data updated for ${record.id}`);
+                        console.log(`DRY RUN: Data updated for ${record.id}`);
                         console.log(diff);
                     }
-                    await db
-                        .insert(records)
-                        .values(record)
-                        .onConflictDoUpdate({
-                            target: records.id,
-                            set: {
-                                url,
-                                cookies,
-                                extracted: record.extracted,
-                                updated_at: sql`CURRENT_TIMESTAMP`,
-                            },
-                        })
-                        .run();
+                } else {
+                    console.log("DRY RUN: Record would be saved here.");
+                    console.log(colorize(record));
+                }
+            } else if (test) {
+                await testRecord({id: record.id, extracted, options});
+                saveSpinner.succeed("Record tested.");
+            } else {
+                if (oldRecord) {
+                    const updated =
+                        oldRecord &&
+                        JSON.stringify(oldRecord.extracted) !==
+                            JSON.stringify(record.extracted);
 
-                    if (oldRecord && oldRecord.id !== record.id) {
+                    if (updated) {
+                        console.warn(`Data updated for ${record.id}`);
                         console.log(
-                            `Record ID changed. (old: ${oldRecord.id}, new: ${record.id})`,
+                            jsonDiff.diffString(oldRecord.extracted, extracted),
                         );
-                        await db
-                            .delete(records)
-                            .where(eq(records.id, oldRecord.id))
-                            .run();
+                        statusText = jsonDiff.diffString(
+                            oldRecord.extracted,
+                            extracted,
+                            {color: false},
+                        );
                     }
 
-                    saveSpinner.succeed("Saved record.");
+                    status = updated ? "updated" : "noChanges";
                 }
 
-                await downloadImages({
-                    ...domQuery,
-                    action,
-                    record,
-                    url,
-                    content,
-                    cookies,
-                    playscrape,
-                    options,
-                });
-            } catch (e) {
-                saveSpinner.fail("Failed to save record.");
-                console.error(e);
-                return false;
+                await db
+                    .insert(records)
+                    .values(record)
+                    .onConflictDoUpdate({
+                        target: records.id,
+                        set: {
+                            action: actionName,
+                            url,
+                            cookies,
+                            extracted: record.extracted,
+                            scraped_at: sql`CURRENT_TIMESTAMP`,
+                            ...(status === "updated"
+                                ? {updated_at: sql`CURRENT_TIMESTAMP`}
+                                : {}),
+                        },
+                    });
+
+                if (oldRecord && oldRecord.id !== record.id) {
+                    console.log(
+                        `Record ID changed. (old: ${oldRecord.id}, new: ${record.id})`,
+                    );
+                    await db
+                        .delete(records)
+                        .where(eq(records.id, oldRecord.id));
+                }
+
+                saveSpinner.succeed("Saved record.");
             }
+
+            endRecordScrape({
+                playscrape,
+                options,
+                status,
+                statusText,
+            });
         }
     } catch (e) {
+        endRecordScrape({
+            playscrape,
+            options,
+            status: "failed",
+            statusText: e.message,
+        });
+
         extractSpinner.fail(`Failed to extract data from ${url}.`);
         console.error(e);
         return false;
@@ -182,47 +227,128 @@ export const reExtractData = async ({
 
     const spinner = ora("Re-extracting records...").start();
 
-    try {
-        let numUpdated = 0;
+    let numUpdated = 0;
 
-        const results = db.select().from(records).all();
+    const results = await db.select().from(records);
 
-        for (const result of results) {
-            const {id, url, action: actionName, content, cookies} = result;
-            const action = actions[actionName];
+    for (const result of results) {
+        const {id, url, action: actionName, content, cookies} = result;
+        const action = actions[actionName];
 
-            if (!action) {
-                console.warn(`No action found for ${actionName}. Skipping.`);
-                continue;
-            }
-
-            if (!content) {
-                console.warn(`No contents found for ${id}. Skipping.`);
-                continue;
-            }
-
-            const playscrape: Playscrape = {
-                db,
-            };
-
-            await handleExtract({
-                action,
-                content,
-                url,
-                actionName,
-                cookies: cookies || "",
-                playscrape,
-                options,
-                oldRecord: result,
-            });
-
-            numUpdated += 1;
+        if (!action) {
+            console.warn(`No action found for ${actionName}. Skipping.`);
+            continue;
         }
 
-        spinner.succeed(`Re-extracted ${numUpdated} record(s).`);
-    } catch (e) {
-        spinner.fail("Failed to re-extract records.");
-        console.error(e);
+        if (!content) {
+            console.warn(`No contents found for ${id}. Skipping.`);
+            continue;
+        }
+
+        const playscrape: Playscrape = {
+            db,
+        };
+
+        await handleExtract({
+            action,
+            content,
+            url,
+            actionName,
+            cookies: cookies || "",
+            playscrape,
+            options,
+            oldRecord: result,
+        });
+
+        numUpdated += 1;
+    }
+
+    spinner.succeed(`Re-extracted ${numUpdated} record(s).`);
+};
+
+export const startRecordScrape = async ({
+    playscrape,
+    options,
+}: {playscrape: Playscrape; options: InternalOptions}) => {
+    if (options.test) {
         return;
     }
+
+    if (!playscrape.currentScrapeId || !playscrape.currentRecordId) {
+        console.error("Scrape has not started yet.");
+        process.exit(1);
+    }
+
+    if (options.dryRun) {
+        playscrape.currentRecordScrapeId = 1;
+        return;
+    }
+
+    const [result] = await playscrape.db
+        .insert(scrapeRecords)
+        .values({
+            status: "running",
+            scrapeId: playscrape.currentScrapeId,
+            recordId: playscrape.currentRecordId,
+        })
+        .returning({id: scrapeRecords.id});
+
+    if (!result?.id) {
+        console.error("Failed to start record scrape.");
+        process.exit(1);
+    }
+
+    playscrape.currentRecordScrapeId = result.id;
+};
+
+export const endRecordScrape = async ({
+    status,
+    statusText,
+    playscrape,
+    options,
+}: {
+    status: "created" | "noChanges" | "updated" | "failed";
+    statusText?: string;
+    playscrape: Playscrape;
+    options: InternalOptions;
+}) => {
+    if (options.test) {
+        return;
+    }
+
+    if (!playscrape.currentRecordScrapeId) {
+        console.error("No current record scrape to end.");
+        process.exit(1);
+    }
+
+    if (options.dryRun) {
+        console.log(`DRY RUN: Record scrape ended: ${status} ${statusText}`);
+        playscrape.currentRecordScrapeId = undefined;
+        return;
+    }
+
+    const result = await playscrape.db
+        .update(scrapeRecords)
+        .set({
+            recordId: playscrape.currentRecordId,
+            status,
+            statusText,
+            ended_at: sql`CURRENT_TIMESTAMP`,
+        })
+        .where(eq(scrapeRecords.id, playscrape.currentRecordScrapeId))
+        .returning({id: scrapeRecords.id});
+
+    if (result.length === 0 || !result[0].id) {
+        console.error("Failed to end record scrape.");
+        process.exit(1);
+    }
+
+    if (playscrape.scrapeStats) {
+        playscrape.scrapeStats[status] += 1;
+        if (status !== "failed") {
+            playscrape.scrapeStats.total += 1;
+        }
+    }
+
+    playscrape.currentRecordScrapeId = undefined;
 };

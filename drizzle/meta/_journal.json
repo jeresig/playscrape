@@ -15,6 +15,13 @@
       "when": 1687040122873,
       "tag": "0001_past_demogoblin",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "5",
+      "when": 1714934723537,
+      "tag": "0002_amusing_black_panther",
+      "breakpoints": true
     }
   ]
 }

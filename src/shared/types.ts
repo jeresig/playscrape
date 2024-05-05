@@ -4,6 +4,7 @@ import {BrowserContext, Locator, Page} from "playwright";
 
 import {DomQuery} from "../actions/extract/dom-query.js";
 import {NewRecord} from "./schema.js";
+import * as schema from "./schema.js";
 
 export type ExtractAction = {
     getURLFromFileName?: (fileName: string) => string;
@@ -106,5 +107,15 @@ export type PlayscrapeBrowser = {
 };
 
 export type Playscrape = {
-    db: BetterSQLite3Database;
+    db: BetterSQLite3Database<typeof schema>;
+    currentScrapeId?: number;
+    currentRecordId?: string;
+    currentRecordScrapeId?: number;
+    scrapeStats?: {
+        total: number;
+        created: number;
+        noChanges: number;
+        updated: number;
+        failed: number;
+    };
 };

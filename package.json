@@ -50,7 +50,7 @@
     "@types/json-diff": "^1.0.3",
     "@types/node": "^20.2.5",
     "@types/xmlserializer": "^0.6.6",
-    "drizzle-kit": "^0.18.1",
+    "drizzle-kit": "^0.20.17",
     "json-colorizer": "^3.0.1",
     "json-diff": "^1.0.6",
     "nodemon": "^3.1.0",

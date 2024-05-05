@@ -4,6 +4,7 @@ import {BetterSQLite3Database, drizzle} from "drizzle-orm/better-sqlite3";
 import {migrate} from "drizzle-orm/better-sqlite3/migrator";
 
 import {__dirname} from "./node.js";
+import * as schema from "./schema.js";
 
 export const initDB = ({
     dbName,
@@ -11,7 +12,7 @@ export const initDB = ({
 }: {
     dbName: string;
     debug?: boolean;
-}): BetterSQLite3Database => {
+}): BetterSQLite3Database<typeof schema> => {
     class QueryLogger {
         logQuery(query: string, params: unknown[]): void {
             if (debug) {
@@ -22,8 +23,9 @@ export const initDB = ({
     }
 
     const sqlite = new Database(dbName);
-    const db: BetterSQLite3Database = drizzle(sqlite, {
+    const db = drizzle(sqlite, {
         logger: new QueryLogger(),
+        schema,
     });
 
     migrate(db, {

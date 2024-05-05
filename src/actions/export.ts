@@ -10,8 +10,7 @@ export const exportRecords = async ({
     options: InternalOptions;
 }) => {
     if (!options.exportFile) {
-        console.error("No export file specified.");
-        return;
+        throw new Error("No export file specified.");
     }
 
     const db = initDB({
@@ -22,14 +21,13 @@ export const exportRecords = async ({
     const spinner = ora("Exporting records...").start();
 
     try {
-        const results = db
-            .select({
-                id: records.id,
-                url: records.url,
-                data: records.extracted,
-            })
-            .from(records)
-            .all();
+        const results = await db.query.records.findMany({
+            columns: {
+                id: true,
+                url: true,
+                extracted: true,
+            },
+        });
 
         const finalResults: Array<{
             id: string;
@@ -40,7 +38,7 @@ export const exportRecords = async ({
             finalResults.push({
                 id: result.id,
                 url: result.url,
-                ...(result.data ? result.data : null),
+                ...(result.extracted ? result.extracted : null),
             });
         }
 
@@ -56,6 +54,6 @@ export const exportRecords = async ({
     } catch (e) {
         spinner.fail("Failed to export records.");
         console.error(e);
-        return;
+        process.exit(1);
     }
 };
