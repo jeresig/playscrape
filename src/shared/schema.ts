@@ -46,8 +46,10 @@ export const scrapes = sqliteTable("scrapes", {
 
 export const scrapeRecords = sqliteTable("scrape_records", {
     id: integer("id", {mode: "number"}).primaryKey(),
-    scrapeId: integer("scrapeId").notNull(),
-    recordId: text("recordId"),
+    scrapeId: integer("scrapeId")
+        .references(() => scrapes.id)
+        .notNull(),
+    recordId: text("recordId").references(() => records.id),
     status: text("status", {
         enum: ["running", "created", "noChanges", "updated", "failed"],
     }).notNull(),
