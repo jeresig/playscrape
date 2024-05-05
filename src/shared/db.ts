@@ -29,7 +29,7 @@ export const initDB = ({
     });
 
     migrate(db, {
-        migrationsFolder: path.join(__dirname(import.meta), "../drizzle"),
+        migrationsFolder: path.join(__dirname(import.meta), "../../drizzle"),
     });
 
     return db;

@@ -30,7 +30,7 @@ export const downloads = sqliteTable("downloads", {
 });
 
 export const scrapes = sqliteTable("scrapes", {
-    id: integer("id", {mode: "number"}).primaryKey({autoIncrement: true}),
+    id: integer("id", {mode: "number"}).primaryKey(),
     status: text("status", {
         enum: ["running", "completed", "failed"],
     }).notNull(),
@@ -45,11 +45,9 @@ export const scrapes = sqliteTable("scrapes", {
 });
 
 export const scrapeRecords = sqliteTable("scrape_records", {
-    id: integer("id", {mode: "number"}).primaryKey({autoIncrement: true}),
-    scrapeId: integer("scrapeId")
-        .references(() => scrapes.id)
-        .notNull(),
-    recordId: text("recordId").references(() => records.id),
+    id: integer("id", {mode: "number"}).primaryKey(),
+    scrapeId: integer("scrapeId").notNull(),
+    recordId: text("recordId"),
     status: text("status", {
         enum: ["running", "created", "noChanges", "updated", "failed"],
     }).notNull(),
