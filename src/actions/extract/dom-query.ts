@@ -1,7 +1,7 @@
 import {DOMParser} from "@xmldom/xmldom";
 import {parse} from "parse5";
-import * as xmlserializer from "xmlserializer";
-import * as xpath from "xpath";
+import xmlserializer from "xmlserializer";
+import xpath from "xpath";
 
 export type DomQuery = {
     dom: Document;

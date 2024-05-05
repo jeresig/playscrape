@@ -245,7 +245,8 @@ export const handleBrowserActionTest = async ({
     }
 
     if (!action.extract) {
-        throw new Error("No extract function defined for this action.");
+        // This is safe to ignore, as we're only testing the extract part.
+        return;
     }
 
     console.log(`Test Action (${actionName})`);
