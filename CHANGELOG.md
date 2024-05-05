@@ -1,5 +1,11 @@
 # playscrape
 
+## 0.2.1
+
+### Patch Changes
+
+- f0ebda2: Fix up dev dependencies.
+
 ## 0.2.0
 
 ### Minor Changes
