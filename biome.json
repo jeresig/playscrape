@@ -4,7 +4,7 @@
         "enabled": true
     },
     "files": {
-        "ignore": ["drizzle", ".changeset"]
+        "ignore": ["drizzle", ".changeset", "package.json"]
     },
     "vcs": {
         "enabled": true,
