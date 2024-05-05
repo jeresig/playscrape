@@ -7,7 +7,7 @@ import {exportRecords} from "./actions/export.js";
 import {reExtractData} from "./actions/extract/extract.js";
 import {scrapeWithBrowser} from "./actions/scrape/browser.js";
 import {MIRROR_ACTION, scrapeMirroredFiles} from "./actions/scrape/mirror.js";
-import {
+import type {
     BrowserAction,
     InternalOptions,
     MirrorAction,
@@ -132,8 +132,8 @@ cli.command("scrape")
             dryRun: !!args.dryRun,
             test: false,
             overwrite: !!args.overwrite,
-            timeout: parseInt(args.timeout, 10),
-            delay: parseInt(args.delay, 10),
+            timeout: Number.parseInt(args.timeout, 10),
+            delay: Number.parseInt(args.delay, 10),
         });
 
         if (mirror) {

@@ -4,9 +4,9 @@ import * as jsonDiff from "json-diff";
 import ora from "ora";
 
 import {initDB} from "../../shared/db.js";
-import {NewRecord, Record} from "../../shared/schema.js";
+import type {NewRecord, Record} from "../../shared/schema.js";
 import {records, scrapeRecords} from "../../shared/schema.js";
-import {
+import type {
     ExtractAction,
     InternalOptions,
     Playscrape,

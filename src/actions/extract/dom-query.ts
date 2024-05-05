@@ -29,8 +29,8 @@ const textFromNode = (
         : xpath.isTextNode(node) || xpath.isAttribute(node)
           ? node.nodeValue
           : xpath.isElement(node)
-              ? node.textContent
-              : null;
+            ? node.textContent
+            : null;
 };
 
 export const getDomQuery = (content: string): DomQuery => {

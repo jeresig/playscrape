@@ -1,6 +1,6 @@
 import {eq, sql} from "drizzle-orm";
 import {scrapes} from "../../shared/schema.js";
-import {InternalOptions, Playscrape} from "../../shared/types.js";
+import type {InternalOptions, Playscrape} from "../../shared/types.js";
 
 export const startScrape = async ({
     playscrape,

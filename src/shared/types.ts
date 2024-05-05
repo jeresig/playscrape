@@ -1,10 +1,10 @@
-import {ObjectCannedACL} from "@aws-sdk/client-s3";
-import {BetterSQLite3Database} from "drizzle-orm/better-sqlite3";
-import {BrowserContext, Locator, Page} from "playwright";
+import type {ObjectCannedACL} from "@aws-sdk/client-s3";
+import type {BetterSQLite3Database} from "drizzle-orm/better-sqlite3";
+import type {BrowserContext, Locator, Page} from "playwright";
 
-import {DomQuery} from "../actions/extract/dom-query.js";
-import {NewRecord} from "./schema.js";
-import * as schema from "./schema.js";
+import type {DomQuery} from "../actions/extract/dom-query.js";
+import type {NewRecord} from "./schema.js";
+import type * as schema from "./schema.js";
 
 export type ExtractAction = {
     getURLFromFileName?: (fileName: string) => string;

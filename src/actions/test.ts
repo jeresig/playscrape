@@ -1,8 +1,8 @@
-import {existsSync, promises as fs} from "node:fs";
+import {promises as fs, existsSync} from "node:fs";
 import * as path from "node:path";
 import {colorize} from "json-colorizer";
 import * as jsonDiff from "json-diff";
-import {InternalOptions} from "../shared/types.js";
+import type {InternalOptions} from "../shared/types.js";
 
 export const testRecord = async ({
     id,

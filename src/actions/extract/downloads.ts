@@ -1,24 +1,24 @@
-import {Buffer} from "buffer";
-import {IncomingMessage} from "http";
+import {Buffer} from "node:buffer";
 import * as fs from "node:fs";
+import type {IncomingMessage} from "node:http";
 import * as path from "node:path";
 import * as nodeUrl from "node:url";
 import {GetObjectCommand, PutObjectCommand, S3Client} from "@aws-sdk/client-s3";
 import {eq, sql} from "drizzle-orm";
 import mime from "mime/lite";
 import ora from "ora";
-import sharp, {Sharp} from "sharp";
+import sharp, {type Sharp} from "sharp";
 
-import {Download, NewDownload, NewRecord} from "../../shared/schema.js";
+import type {Download, NewDownload, NewRecord} from "../../shared/schema.js";
 import {downloads} from "../../shared/schema.js";
-import {
+import type {
     ExtractAction,
     InternalOptions,
     Playscrape,
     S3Options,
 } from "../../shared/types.js";
 import {hash, wait} from "../../shared/utils.js";
-import {DomQuery} from "./dom-query.js";
+import type {DomQuery} from "./dom-query.js";
 
 let s3Client: S3Client | null = null;
 

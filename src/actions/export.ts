@@ -1,8 +1,7 @@
 import * as fs from "node:fs";
 import ora from "ora";
 import {initDB} from "../shared/db.js";
-import {records} from "../shared/schema.js";
-import {InternalOptions} from "../shared/types.js";
+import type {InternalOptions} from "../shared/types.js";
 
 export const exportRecords = async ({
     options,

@@ -1,8 +1,8 @@
 import ora from "ora";
-import {Browser, BrowserContext, chromium} from "playwright";
+import {type Browser, type BrowserContext, chromium} from "playwright";
 
 import {initDB} from "../../shared/db.js";
-import {
+import type {
     BrowserAction,
     InternalOptions,
     Playscrape,

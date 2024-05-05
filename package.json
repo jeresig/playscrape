@@ -1,60 +1,57 @@
 {
-  "name": "playscrape",
-  "version": "0.1.1",
-  "description": "",
-  "type": "module",
-  "exports": "./dist/types.js",
-  "types": "./dist/types.d.ts",
-  "sideEffects": false,
-  "files": [
-    "./dist/",
-    "./drizzle/"
-  ],
-  "publishConfig": {
-    "access": "public"
-  },
-  "scripts": {
-    "test": "echo \"No tests\"",
-    "dev": "node --no-warnings --enable-source-maps --loader ts-node/esm src/playscrape.ts",
-    "build": "tsc && chmod +x dist/playscrape.js",
-    "build-watch": "nodemon --exec yarn build --watch src --ext js,ts,tsx",
-    "release": "yarn build && changeset publish",
-    "db:gen-schema": "drizzle-kit generate:sqlite",
-    "lint:ci": "biome check .",
-    "lint": "biome check --apply-unsafe ."
-  },
-  "bin": "dist/playscrape.js",
-  "author": "John Resig <jeresig@gmail.com>",
-  "license": "MIT",
-  "dependencies": {
-    "@aws-sdk/client-s3": "^3.502.0",
-    "@commander-js/extra-typings": "^11.0.0",
-    "@xmldom/xmldom": "^0.8.10",
-    "better-sqlite3": "^9.6.0",
-    "commander": "^11.0.0",
-    "drizzle-orm": "^0.30.10",
-    "fast-glob": "^3.3.2",
-    "mime": "^4.0.1",
-    "ora": "^6.3.1",
-    "parse5": "^7.1.2",
-    "playwright": "^1.43.1",
-    "sharp": "^0.32.1",
-    "xmlserializer": "^0.6.1",
-    "xpath": "^0.0.33"
-  },
-  "devDependencies": {
-    "@biomejs/biome": "1.4.1",
-    "@changesets/cli": "^2.26.2",
-    "@sindresorhus/tsconfig": "^5.0.0",
-    "@types/better-sqlite3": "^7.6.4",
-    "@types/json-diff": "^1.0.3",
-    "@types/node": "^20.2.5",
-    "@types/xmlserializer": "^0.6.6",
-    "drizzle-kit": "^0.20.17",
-    "json-colorizer": "^3.0.1",
-    "json-diff": "^1.0.6",
-    "nodemon": "^3.1.0",
-    "ts-node": "^10.9.1",
-    "typescript": "^5.2.2"
-  }
+    "name": "playscrape",
+    "version": "0.1.1",
+    "description": "",
+    "type": "module",
+    "exports": "./dist/types.js",
+    "types": "./dist/types.d.ts",
+    "sideEffects": false,
+    "files": ["./dist/", "./drizzle/"],
+    "publishConfig": {
+        "access": "public"
+    },
+    "scripts": {
+        "test": "echo \"No tests\"",
+        "dev": "node --no-warnings --enable-source-maps --loader ts-node/esm src/playscrape.ts",
+        "build": "tsc && chmod +x dist/playscrape.js",
+        "build-watch": "nodemon --exec yarn build --watch src --ext js,ts,tsx",
+        "release": "yarn build && changeset publish",
+        "db:gen-schema": "drizzle-kit generate:sqlite",
+        "lint:ci": "biome check .",
+        "lint": "biome check --apply-unsafe ."
+    },
+    "bin": "dist/playscrape.js",
+    "author": "John Resig <jeresig@gmail.com>",
+    "license": "MIT",
+    "dependencies": {
+        "@aws-sdk/client-s3": "^3.502.0",
+        "@commander-js/extra-typings": "^11.0.0",
+        "@xmldom/xmldom": "^0.8.10",
+        "better-sqlite3": "^9.6.0",
+        "commander": "^11.0.0",
+        "drizzle-orm": "^0.30.10",
+        "fast-glob": "^3.3.2",
+        "mime": "^4.0.1",
+        "ora": "^6.3.1",
+        "parse5": "^7.1.2",
+        "playwright": "^1.43.1",
+        "sharp": "^0.32.1",
+        "xmlserializer": "^0.6.1",
+        "xpath": "^0.0.33"
+    },
+    "devDependencies": {
+        "@biomejs/biome": "^1.7.2",
+        "@changesets/cli": "^2.26.2",
+        "@sindresorhus/tsconfig": "^5.0.0",
+        "@types/better-sqlite3": "^7.6.4",
+        "@types/json-diff": "^1.0.3",
+        "@types/node": "^20.2.5",
+        "@types/xmlserializer": "^0.6.6",
+        "drizzle-kit": "^0.20.17",
+        "json-colorizer": "^3.0.1",
+        "json-diff": "^1.0.6",
+        "nodemon": "^3.1.0",
+        "ts-node": "^10.9.1",
+        "typescript": "^5.2.2"
+    }
 }

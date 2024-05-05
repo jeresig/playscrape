@@ -4,7 +4,11 @@ import * as FastGlob from "fast-glob";
 import ora from "ora";
 
 import {initDB} from "../../shared/db.js";
-import {InternalOptions, MirrorAction, Playscrape} from "../../shared/types.js";
+import type {
+    InternalOptions,
+    MirrorAction,
+    Playscrape,
+} from "../../shared/types.js";
 import {handleExtract} from "../extract/extract.js";
 import {endScrape, startScrape} from "./scrape.js";
 
