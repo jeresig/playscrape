@@ -4,16 +4,16 @@
 
 ### Minor Changes
 
-- 3bfc709: Add support for test runs.
-- 3bfc709: Rename files, rename update step to scrape, remove reset step.
-- 3bfc709: Add in visitAll support.
-- 3bfc709: Add tables for tracking scrape progress.
-- 3bfc709: Add re-extract command.
+- b153fad: Add support for test runs.
+- 3ef781b: Rename files, rename update step to scrape, remove reset step.
+- da08ea4: Add in visitAll support.
+- 7db6f7e: Add tables for tracking scrape progress.
+- e7ba839: Add re-extract command.
 
 ### Patch Changes
 
-- 3bfc709: Fix broken exports.
-- 3bfc709: Upgrade dependencies.
+- 4bccf7e: Fix broken exports.
+- 854bc68: Upgrade dependencies.
 
 ## 0.1.1
 
