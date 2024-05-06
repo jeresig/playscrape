@@ -64,7 +64,9 @@ export const endScrape = async ({
     }
 
     if (options.dryRun) {
-        console.log(`DRY RUN: Ending scrape, status: ${status} ${statusText}`);
+        console.log(
+            `DRY RUN: Ending scrape, status: ${status} ${statusText || ""}`,
+        );
         console.log(playscrape.scrapeStats);
         playscrape.currentScrapeId = undefined;
         playscrape.scrapeStats = undefined;

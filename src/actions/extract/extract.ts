@@ -78,7 +78,9 @@ export const handleExtract = async ({
             : [extracted];
 
         extractSpinner.succeed(
-            `Extracted ${extractedRecords.length} record(s).`,
+            extractedRecords.length === 1
+                ? "Extracted 1 record."
+                : `Extracted ${extractedRecords.length} records.`,
         );
 
         for (const extracted of extractedRecords) {
@@ -100,7 +102,7 @@ export const handleExtract = async ({
             // Download the images first, so that we don't save the record
             // if the images fail to download.
             await downloadImages({
-                ...domQuery,
+                domQuery,
                 action,
                 record,
                 url,
@@ -116,6 +118,7 @@ export const handleExtract = async ({
             let statusText: string | undefined;
 
             if (dryRun) {
+                saveSpinner.succeed("Record extraction dry run complete.");
                 if (oldRecord) {
                     if (oldRecord.id !== record.id) {
                         console.log(
@@ -132,11 +135,17 @@ export const handleExtract = async ({
                     }
                 } else {
                     console.log("DRY RUN: Record would be saved here.");
-                    console.log(colorize(record));
+                    console.log(
+                        colorize({
+                            ...record,
+                            cookies: `${record.cookies?.substring(0, 50)}...`,
+                            content: `${record.content?.substring(0, 50)}...`,
+                        }),
+                    );
                 }
             } else if (test) {
-                await testRecord({id: record.id, extracted, options});
                 saveSpinner.succeed("Record tested.");
+                await testRecord({id: record.id, extracted, options});
             } else {
                 if (oldRecord) {
                     const updated =
@@ -263,7 +272,11 @@ export const reExtractData = async ({
         numUpdated += 1;
     }
 
-    spinner.succeed(`Re-extracted ${numUpdated} record(s).`);
+    spinner.succeed(
+        numUpdated === 1
+            ? "Re-extracted 1 record."
+            : `Re-extracted ${numUpdated} records.`,
+    );
 };
 
 export const startRecordScrape = async ({
@@ -274,7 +287,7 @@ export const startRecordScrape = async ({
         return;
     }
 
-    if (!playscrape.currentScrapeId || !playscrape.currentRecordId) {
+    if (!playscrape.currentScrapeId) {
         console.error("Scrape has not started yet.");
         process.exit(1);
     }
@@ -321,8 +334,17 @@ export const endRecordScrape = async ({
         process.exit(1);
     }
 
+    if (playscrape.scrapeStats) {
+        playscrape.scrapeStats[status] += 1;
+        if (status !== "failed") {
+            playscrape.scrapeStats.total += 1;
+        }
+    }
+
     if (options.dryRun) {
-        console.log(`DRY RUN: Record scrape ended: ${status} ${statusText}`);
+        console.log(
+            `DRY RUN: Record scrape ended: ${status} ${statusText || ""}`,
+        );
         playscrape.currentRecordScrapeId = undefined;
         return;
     }
@@ -341,13 +363,6 @@ export const endRecordScrape = async ({
     if (result.length === 0 || !result[0].id) {
         console.error("Failed to end record scrape.");
         process.exit(1);
-    }
-
-    if (playscrape.scrapeStats) {
-        playscrape.scrapeStats[status] += 1;
-        if (status !== "failed") {
-            playscrape.scrapeStats.total += 1;
-        }
     }
 
     playscrape.currentRecordScrapeId = undefined;

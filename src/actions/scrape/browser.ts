@@ -14,6 +14,8 @@ import {endScrape, startScrape} from "./scrape.js";
 
 export const INITIAL_BROWSER_ACTION = "start";
 
+let initialized = false;
+
 export const handleBrowserAction = async ({
     actionName = INITIAL_BROWSER_ACTION,
     actions,
@@ -38,10 +40,13 @@ export const handleBrowserAction = async ({
         throw new Error(`Unknown action: ${actionName}`);
     }
 
-    if ("init" in action && action.init) {
+    if ("init" in action && action.init && !initialized) {
+        initialized = true;
         const initSpinner = ora({text: "Initializing...", indent}).start();
         if (typeof action.init === "string") {
-            await page.goto(action.init);
+            await page.goto(action.init, {
+                waitUntil: "domcontentloaded",
+            });
         } else {
             await action.init({page});
         }
@@ -65,6 +70,10 @@ export const handleBrowserAction = async ({
             actionName,
             options,
         });
+    } else {
+        // If we're not extracting, we need to wait for the page to load for
+        // the visit, visitAll, and next actions.
+        await page.waitForLoadState("domcontentloaded");
     }
 
     const undoVisit = async () => {
@@ -72,7 +81,9 @@ export const handleBrowserAction = async ({
         if ("undoVisit" in action && action.undoVisit) {
             await action.undoVisit({page});
         } else if (actionName !== INITIAL_BROWSER_ACTION) {
-            await page.goBack();
+            await page.goBack({
+                waitUntil: "domcontentloaded",
+            });
         }
     };
 
@@ -90,17 +101,24 @@ export const handleBrowserAction = async ({
                     playBrowser,
                     options,
                 });
-                await undoVisit();
             },
         });
     } else if ("visitAll" in action) {
-        const {action: nextAction, links: linksLocator} = await action.visitAll(
-            {page},
-        );
+        let curLink = 0;
+        let numLinks = 0;
 
-        const links = await linksLocator.all();
+        do {
+            const {action: nextAction, links: linksLocator} =
+                await action.visitAll({page});
 
-        for (const link of links) {
+            const links = await linksLocator.all();
+            numLinks = Math.min(3, links.length);
+            if (curLink >= numLinks) {
+                break;
+            }
+            const link = links[curLink];
+            curLink += 1;
+
             const visitSpinner = ora({
                 text: "Visiting...",
                 indent,
@@ -115,8 +133,7 @@ export const handleBrowserAction = async ({
                 playBrowser,
                 options,
             });
-            await undoVisit();
-        }
+        } while (curLink < numLinks);
     }
 
     if ("next" in action && action.next) {
@@ -143,13 +160,15 @@ export const handleBrowserAction = async ({
         nextSpinner.succeed("Next page.");
 
         await handleBrowserAction({
-            actionName: actionName,
+            actionName,
             actions,
             playscrape,
             playBrowser,
             options,
         });
     }
+
+    await undoVisit();
 };
 
 export const scrapeWithBrowser = async ({
@@ -266,9 +285,14 @@ export const handleBrowserActionTest = async ({
         await page.goto(url);
         initSpinner.succeed(`Test url loaded: ${url}`);
 
+        const subOptions = {
+            ...options,
+            indent: (options.indent || 0) + 2,
+        };
+
         const {content, cookies} = await getPageContents({
             playBrowser,
-            options,
+            options: subOptions,
         });
 
         await handleExtract({
@@ -278,7 +302,7 @@ export const handleBrowserActionTest = async ({
             url,
             playscrape,
             actionName,
-            options,
+            options: subOptions,
         });
     }
 };

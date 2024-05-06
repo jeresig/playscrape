@@ -245,16 +245,12 @@ export const downloadImages = async ({
     action,
     record,
     url,
-    dom,
-    query,
-    queryAll,
-    queryText,
-    queryAllText,
     content,
     cookies,
     playscrape,
     options,
-}: DomQuery & {
+    domQuery,
+}: {
     action: ExtractAction;
     record: NewRecord;
     url: string;
@@ -262,6 +258,7 @@ export const downloadImages = async ({
     cookies: string | null;
     playscrape: Playscrape;
     options: InternalOptions;
+    domQuery: DomQuery;
 }) => {
     const {db} = playscrape;
     const {delay, indent, dryRun, test} = options;
@@ -271,13 +268,9 @@ export const downloadImages = async ({
     }
 
     const urls = await action.downloadImages({
+        ...domQuery,
         record,
         url,
-        dom,
-        query,
-        queryAll,
-        queryText,
-        queryAllText,
         content,
     });
 
