@@ -112,7 +112,7 @@ export const handleBrowserAction = async ({
                 await action.visitAll({page});
 
             const links = await linksLocator.all();
-            numLinks = Math.min(3, links.length);
+            numLinks = links.length;
             if (curLink >= numLinks) {
                 break;
             }
@@ -166,9 +166,9 @@ export const handleBrowserAction = async ({
             playBrowser,
             options,
         });
+    } else {
+        await undoVisit();
     }
-
-    await undoVisit();
 };
 
 export const scrapeWithBrowser = async ({
