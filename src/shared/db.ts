@@ -28,9 +28,18 @@ export const initDB = ({
         schema,
     });
 
-    migrate(db, {
-        migrationsFolder: path.join(__dirname(import.meta), "../../drizzle"),
-    });
+    try {
+        migrate(db, {
+            migrationsFolder: path.join(
+                __dirname(import.meta),
+                "../../drizzle",
+            ),
+        });
+    } catch (e) {
+        console.error("Failed to migrate database schema.");
+        console.error(e);
+        process.exit(1);
+    }
 
     return db;
 };

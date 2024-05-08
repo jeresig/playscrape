@@ -98,6 +98,7 @@ const parseActionFile = async (
         downloadTo: importOptions.s3 ? "s3" : "local",
         timeout: extraOptions.timeout || 60000,
         delay: extraOptions.delay || 1000,
+        source: "default",
         ...importOptions,
         dbName,
         exportFile,

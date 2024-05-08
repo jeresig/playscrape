@@ -31,6 +31,7 @@ export const startScrape = async ({
     const [result] = await playscrape.db
         .insert(scrapes)
         .values({
+            source: options.source,
             status: "running",
         })
         .returning({id: scrapes.id});

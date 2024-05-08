@@ -15,11 +15,12 @@ CREATE TABLE `downloads` (
 --> statement-breakpoint
 CREATE TABLE `records` (
 	`id` text PRIMARY KEY NOT NULL,
+	`source` text NOT NULL,
 	`url` text NOT NULL,
 	`action` text NOT NULL,
-	`content` text,
+	`content` text NOT NULL,
 	`cookies` text,
-	`extracted` text,
+	`extracted` text NOT NULL,
 	`created_at` text DEFAULT CURRENT_TIMESTAMP,
 	`updated_at` text DEFAULT CURRENT_TIMESTAMP,
 	`scraped_at` text DEFAULT CURRENT_TIMESTAMP
@@ -39,6 +40,7 @@ CREATE TABLE `scrape_records` (
 --> statement-breakpoint
 CREATE TABLE `scrapes` (
 	`id` integer PRIMARY KEY NOT NULL,
+	`source` text NOT NULL,
 	`status` text NOT NULL,
 	`total_records` integer DEFAULT 0 NOT NULL,
 	`created_records` integer DEFAULT 0 NOT NULL,
@@ -49,3 +51,9 @@ CREATE TABLE `scrapes` (
 	`started_at` text DEFAULT CURRENT_TIMESTAMP,
 	`ended_at` text
 );
+--> statement-breakpoint
+CREATE INDEX `record_id_index` ON `downloads` (`recordId`);--> statement-breakpoint
+CREATE INDEX `source_index` ON `records` (`source`);--> statement-breakpoint
+CREATE INDEX `updated_index` ON `records` (`updated_at`);--> statement-breakpoint
+CREATE INDEX `scrape_id_index` ON `scrape_records` (`scrapeId`);--> statement-breakpoint
+CREATE INDEX `source_index` ON `scrapes` (`source`);

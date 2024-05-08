@@ -1,7 +1,7 @@
 {
   "version": "5",
   "dialect": "sqlite",
-  "id": "0d034952-d99a-4df1-9d42-bfa3eb1c776f",
+  "id": "53cec153-ec1d-4787-b82c-5eaeaea8289f",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "tables": {
     "downloads": {
@@ -87,7 +87,15 @@
           "default": "CURRENT_TIMESTAMP"
         }
       },
-      "indexes": {},
+      "indexes": {
+        "record_id_index": {
+          "name": "record_id_index",
+          "columns": [
+            "recordId"
+          ],
+          "isUnique": false
+        }
+      },
       "foreignKeys": {
         "downloads_recordId_records_id_fk": {
           "name": "downloads_recordId_records_id_fk",
@@ -116,6 +124,13 @@
           "notNull": true,
           "autoincrement": false
         },
+        "source": {
+          "name": "source",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
         "url": {
           "name": "url",
           "type": "text",
@@ -134,7 +149,7 @@
           "name": "content",
           "type": "text",
           "primaryKey": false,
-          "notNull": false,
+          "notNull": true,
           "autoincrement": false
         },
         "cookies": {
@@ -148,7 +163,7 @@
           "name": "extracted",
           "type": "text",
           "primaryKey": false,
-          "notNull": false,
+          "notNull": true,
           "autoincrement": false
         },
         "created_at": {
@@ -176,7 +191,22 @@
           "default": "CURRENT_TIMESTAMP"
         }
       },
-      "indexes": {},
+      "indexes": {
+        "source_index": {
+          "name": "source_index",
+          "columns": [
+            "source"
+          ],
+          "isUnique": false
+        },
+        "updated_index": {
+          "name": "updated_index",
+          "columns": [
+            "updated_at"
+          ],
+          "isUnique": false
+        }
+      },
       "foreignKeys": {},
       "compositePrimaryKeys": {},
       "uniqueConstraints": {}
@@ -235,7 +265,15 @@
           "autoincrement": false
         }
       },
-      "indexes": {},
+      "indexes": {
+        "scrape_id_index": {
+          "name": "scrape_id_index",
+          "columns": [
+            "scrapeId"
+          ],
+          "isUnique": false
+        }
+      },
       "foreignKeys": {
         "scrape_records_scrapeId_scrapes_id_fk": {
           "name": "scrape_records_scrapeId_scrapes_id_fk",
@@ -274,6 +312,13 @@
           "name": "id",
           "type": "integer",
           "primaryKey": true,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "source": {
+          "name": "source",
+          "type": "text",
+          "primaryKey": false,
           "notNull": true,
           "autoincrement": false
         },
@@ -347,7 +392,15 @@
           "autoincrement": false
         }
       },
-      "indexes": {},
+      "indexes": {
+        "source_index": {
+          "name": "source_index",
+          "columns": [
+            "source"
+          ],
+          "isUnique": false
+        }
+      },
       "foreignKeys": {},
       "compositePrimaryKeys": {},
       "uniqueConstraints": {}

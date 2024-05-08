@@ -68,6 +68,7 @@ export type BrowserAction = {
 };
 
 export type InternalOptions = {
+    source: string;
     debug?: boolean;
     dryRun?: boolean;
     test?: boolean;
@@ -91,6 +92,7 @@ export type S3Options = {
 };
 
 export type Options = {
+    source?: string;
     format?: string;
     overwrite?: boolean;
     dbName?: string;

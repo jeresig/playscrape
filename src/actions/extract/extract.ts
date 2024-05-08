@@ -86,6 +86,7 @@ export const handleExtract = async ({
         for (const extracted of extractedRecords) {
             const record: NewRecord = {
                 id: extracted.id || hash(extracted.url || url),
+                source: options.source,
                 url: extracted.url || url,
                 action: actionName,
                 content,
@@ -238,7 +239,9 @@ export const reExtractData = async ({
 
     let numUpdated = 0;
 
-    const results = await db.select().from(records);
+    const results = await db.query.records.findMany({
+        where: eq(records.source, options.source),
+    });
 
     for (const result of results) {
         const {id, url, action: actionName, content, cookies} = result;

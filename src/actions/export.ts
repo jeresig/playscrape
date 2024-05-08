@@ -1,6 +1,9 @@
 import * as fs from "node:fs";
+import {eq} from "drizzle-orm";
 import ora from "ora";
+
 import {initDB} from "../shared/db.js";
+import {records} from "../shared/schema.js";
 import type {InternalOptions} from "../shared/types.js";
 
 export const exportRecords = async ({
@@ -26,6 +29,7 @@ export const exportRecords = async ({
                 url: true,
                 extracted: true,
             },
+            where: eq(records.source, options.source),
         });
 
         const finalResults: Array<{
