@@ -26,26 +26,36 @@ export const exportRecords = async ({
         const results = await db.query.records.findMany({
             columns: {
                 id: true,
+                source: true,
                 url: true,
                 extracted: true,
+                created_at: true,
+                updated_at: true,
+                scraped_at: true,
+            },
+            with: {
+                downloads: {
+                    columns: {
+                        width: true,
+                        height: true,
+                        file_size: true,
+                        file_name: true,
+                        created_at: true,
+                        updated_at: true,
+                    },
+                },
             },
             where: eq(records.source, options.source),
         });
 
-        const finalResults: Array<{
-            id: string;
-            url: string;
-        }> = [];
-
-        for (const result of results) {
-            finalResults.push({
-                id: result.id,
-                url: result.url,
-                ...(result.extracted ? result.extracted : null),
-            });
-        }
-
-        const resultString = JSON.stringify(finalResults);
+        // We spread out the extracted field to the top level of the object
+        // so that it's easier to view in the exported JSON file.
+        const resultString = JSON.stringify(
+            results.map(({extracted, ...rest}) => ({
+                ...rest,
+                ...(extracted || null),
+            })),
+        );
 
         if (options.exportFile) {
             fs.writeFileSync(options.exportFile, resultString, "utf-8");
@@ -53,7 +63,7 @@ export const exportRecords = async ({
             console.log(resultString);
         }
 
-        spinner.succeed(`Exported ${finalResults.length} record(s).`);
+        spinner.succeed(`Exported ${results.length} record(s).`);
     } catch (e) {
         spinner.fail("Failed to export records.");
         console.error(e);
