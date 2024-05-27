@@ -21,7 +21,7 @@ export const scrapeMirroredFiles = async ({
     options: InternalOptions;
     action: MirrorAction;
 }) => {
-    const db = initDB({
+    const db = await initDB({
         debug: options.debug,
         dbName: options.dbName,
     });
@@ -32,7 +32,7 @@ export const scrapeMirroredFiles = async ({
 
     const spinner = ora("Finding mirrored files to extract from...").start();
 
-    startScrape({playscrape, options});
+    await startScrape({playscrape, options});
 
     try {
         const patterns = (options.test
@@ -53,9 +53,9 @@ export const scrapeMirroredFiles = async ({
             options,
         });
 
-        endScrape({playscrape, options, status: "completed"});
+        await endScrape({playscrape, options, status: "completed"});
     } catch (e) {
-        endScrape({
+        await endScrape({
             playscrape,
             options,
             status: "failed",

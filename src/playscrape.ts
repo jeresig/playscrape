@@ -128,19 +128,24 @@ cli.command("scrape")
     .option("--delay <number>", "delay in milliseconds", "1000")
     .option("--overwrite", "overwrite existing downloaded files")
     .action(async (fileName, args) => {
-        const {browser, mirror, options} = await parseActionFile(fileName, {
-            debug: !!args.debug,
-            dryRun: !!args.dryRun,
-            test: false,
-            overwrite: !!args.overwrite,
-            timeout: Number.parseInt(args.timeout, 10),
-            delay: Number.parseInt(args.delay, 10),
-        });
+        try {
+            const {browser, mirror, options} = await parseActionFile(fileName, {
+                debug: !!args.debug,
+                dryRun: !!args.dryRun,
+                test: false,
+                overwrite: !!args.overwrite,
+                timeout: Number.parseInt(args.timeout, 10),
+                delay: Number.parseInt(args.delay, 10),
+            });
 
-        if (mirror) {
-            await scrapeMirroredFiles({options, action: mirror});
-        } else if (browser) {
-            await scrapeWithBrowser({options, actions: browser});
+            if (mirror) {
+                await scrapeMirroredFiles({options, action: mirror});
+            } else if (browser) {
+                await scrapeWithBrowser({options, actions: browser});
+            }
+        } catch (e) {
+            console.error(e);
+            process.exit(1);
         }
     });
 

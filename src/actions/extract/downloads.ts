@@ -320,7 +320,7 @@ export const downloadImages = async ({
                     target: downloads.id,
                     set: {
                         ...imageDetails,
-                        updated_at: sql`CURRENT_TIMESTAMP`,
+                        updated_at: sql`now()`,
                     },
                 });
 

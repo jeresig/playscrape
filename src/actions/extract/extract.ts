@@ -51,7 +51,7 @@ export const handleExtract = async ({
         playscrape.currentRecordId = oldRecord.id;
     }
 
-    startRecordScrape({playscrape, options});
+    await startRecordScrape({playscrape, options});
 
     try {
         const domQuery = getDomQuery(content);
@@ -63,7 +63,7 @@ export const handleExtract = async ({
         });
 
         if (!extracted) {
-            endRecordScrape({
+            await endRecordScrape({
                 playscrape,
                 options,
                 status: "failed",
@@ -97,26 +97,16 @@ export const handleExtract = async ({
             playscrape.currentRecordId = record.id;
 
             if (!playscrape.currentRecordScrapeId) {
-                startRecordScrape({playscrape, options});
+                await startRecordScrape({playscrape, options});
             }
-
-            // Download the images first, so that we don't save the record
-            // if the images fail to download.
-            await downloadImages({
-                domQuery,
-                action,
-                record,
-                url,
-                content,
-                cookies,
-                playscrape,
-                options,
-            });
-
-            const saveSpinner = ora({text: "Saving record...", indent}).start();
 
             let status: "created" | "noChanges" | "updated" = "created";
             let statusText: string | undefined;
+
+            const saveSpinner = ora({
+                text: "Saving record...",
+                indent,
+            }).start();
 
             if (dryRun) {
                 saveSpinner.succeed("Record extraction dry run complete.");
@@ -148,65 +138,91 @@ export const handleExtract = async ({
                 saveSpinner.succeed("Record tested.");
                 await testRecord({id: record.id, extracted, options});
             } else {
-                if (oldRecord) {
-                    const updated =
-                        oldRecord &&
-                        JSON.stringify(oldRecord.extracted) !==
-                            JSON.stringify(record.extracted);
-
-                    if (updated) {
-                        console.warn(`Data updated for ${record.id}`);
-                        console.log(
-                            jsonDiff.diffString(oldRecord.extracted, extracted),
-                        );
-                        statusText = jsonDiff.diffString(
-                            oldRecord.extracted,
-                            extracted,
-                            {color: false},
-                        );
-                    }
-
-                    status = updated ? "updated" : "noChanges";
-                }
-
-                await db
-                    .insert(records)
-                    .values(record)
-                    .onConflictDoUpdate({
-                        target: records.id,
-                        set: {
-                            action: actionName,
-                            url,
-                            cookies,
-                            extracted: record.extracted,
-                            scraped_at: sql`CURRENT_TIMESTAMP`,
-                            ...(status === "updated"
-                                ? {updated_at: sql`CURRENT_TIMESTAMP`}
-                                : {}),
+                await db.transaction(async (tx) => {
+                    // Download the images first, so that we don't save the record
+                    // if the images fail to download.
+                    await downloadImages({
+                        domQuery,
+                        action,
+                        record,
+                        url,
+                        content,
+                        cookies,
+                        playscrape: {
+                            ...playscrape,
+                            db: tx,
                         },
+                        options,
                     });
 
-                if (oldRecord && oldRecord.id !== record.id) {
-                    console.log(
-                        `Record ID changed. (old: ${oldRecord.id}, new: ${record.id})`,
-                    );
-                    await db
-                        .delete(records)
-                        .where(eq(records.id, oldRecord.id));
-                }
+                    const saveSpinner = ora({
+                        text: "Saving record...",
+                        indent,
+                    }).start();
 
-                saveSpinner.succeed("Saved record.");
+                    if (oldRecord) {
+                        const updated =
+                            oldRecord &&
+                            JSON.stringify(oldRecord.extracted) !==
+                                JSON.stringify(record.extracted);
+
+                        if (updated) {
+                            console.warn(`Data updated for ${record.id}`);
+                            console.log(
+                                jsonDiff.diffString(
+                                    oldRecord.extracted,
+                                    extracted,
+                                ),
+                            );
+                            statusText = jsonDiff.diffString(
+                                oldRecord.extracted,
+                                extracted,
+                                {color: false},
+                            );
+                        }
+
+                        status = updated ? "updated" : "noChanges";
+                    }
+
+                    await tx
+                        .insert(records)
+                        .values(record)
+                        .onConflictDoUpdate({
+                            target: records.id,
+                            set: {
+                                action: actionName,
+                                url,
+                                cookies,
+                                extracted: record.extracted,
+                                scraped_at: sql`now()`,
+                                ...(status === "updated"
+                                    ? {updated_at: sql`now()`}
+                                    : {}),
+                            },
+                        });
+
+                    if (oldRecord && oldRecord.id !== record.id) {
+                        console.log(
+                            `Record ID changed. (old: ${oldRecord.id}, new: ${record.id})`,
+                        );
+                        await tx
+                            .delete(records)
+                            .where(eq(records.id, oldRecord.id));
+                    }
+
+                    saveSpinner.succeed("Saved record.");
+                });
+
+                await endRecordScrape({
+                    playscrape,
+                    options,
+                    status,
+                    statusText,
+                });
             }
-
-            endRecordScrape({
-                playscrape,
-                options,
-                status,
-                statusText,
-            });
         }
     } catch (e) {
-        endRecordScrape({
+        await endRecordScrape({
             playscrape,
             options,
             status: "failed",
@@ -230,7 +246,7 @@ export const reExtractData = async ({
     };
     options: InternalOptions;
 }) => {
-    const db = initDB({
+    const db = await initDB({
         debug: options.debug,
         dbName: options.dbName,
     });
@@ -282,7 +298,7 @@ export const reExtractData = async ({
     );
 };
 
-export const startRecordScrape = async ({
+const startRecordScrape = async ({
     playscrape,
     options,
 }: {playscrape: Playscrape; options: InternalOptions}) => {
@@ -317,7 +333,7 @@ export const startRecordScrape = async ({
     playscrape.currentRecordScrapeId = result.id;
 };
 
-export const endRecordScrape = async ({
+const endRecordScrape = async ({
     status,
     statusText,
     playscrape,
@@ -358,7 +374,7 @@ export const endRecordScrape = async ({
             recordId: playscrape.currentRecordId,
             status,
             statusText,
-            ended_at: sql`CURRENT_TIMESTAMP`,
+            ended_at: sql`now()`,
         })
         .where(eq(scrapeRecords.id, playscrape.currentRecordScrapeId))
         .returning({id: scrapeRecords.id});

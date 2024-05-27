@@ -1,18 +1,17 @@
 import * as path from "node:path";
-import Database from "better-sqlite3";
-import {type BetterSQLite3Database, drizzle} from "drizzle-orm/better-sqlite3";
-import {migrate} from "drizzle-orm/better-sqlite3/migrator";
+import {type NodePgDatabase, drizzle} from "drizzle-orm/node-postgres";
+import {migrate} from "drizzle-orm/node-postgres/migrator";
+import pg from "pg";
 
 import {__dirname} from "./node.js";
 import * as schema from "./schema.js";
 
-export const initDB = ({
-    dbName,
+export const initDB = async ({
     debug = false,
 }: {
     dbName: string;
     debug?: boolean;
-}): BetterSQLite3Database<typeof schema> => {
+}): Promise<NodePgDatabase<typeof schema>> => {
     class QueryLogger {
         logQuery(query: string, params: unknown[]): void {
             if (debug) {
@@ -22,14 +21,19 @@ export const initDB = ({
         }
     }
 
-    const sqlite = new Database(dbName);
-    const db = drizzle(sqlite, {
+    const client = new pg.Client({
+        database: process.env.PGDATABASE || "playscrape",
+    });
+
+    await client.connect();
+
+    const db = drizzle(client, {
         logger: new QueryLogger(),
         schema,
     });
 
     try {
-        migrate(db, {
+        await migrate(db, {
             migrationsFolder: path.join(
                 __dirname(import.meta),
                 "../../drizzle",

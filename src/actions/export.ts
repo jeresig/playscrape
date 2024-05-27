@@ -15,7 +15,7 @@ export const exportRecords = async ({
         throw new Error("No export file specified.");
     }
 
-    const db = initDB({
+    const db = await initDB({
         debug: options.debug,
         dbName: options.dbName,
     });

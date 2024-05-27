@@ -1,5 +1,5 @@
 import type {ObjectCannedACL} from "@aws-sdk/client-s3";
-import type {BetterSQLite3Database} from "drizzle-orm/better-sqlite3";
+import type {NodePgDatabase} from "drizzle-orm/node-postgres";
 import type {BrowserContext, Locator, Page} from "playwright";
 
 import type {DomQuery} from "../actions/extract/dom-query.js";
@@ -109,7 +109,7 @@ export type PlayscrapeBrowser = {
 };
 
 export type Playscrape = {
-    db: BetterSQLite3Database<typeof schema>;
+    db: NodePgDatabase<typeof schema>;
     currentScrapeId?: number;
     currentRecordId?: string;
     currentRecordScrapeId?: number;

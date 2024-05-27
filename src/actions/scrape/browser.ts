@@ -178,7 +178,7 @@ export const scrapeWithBrowser = async ({
     options: InternalOptions;
     actions: BrowserAction;
 }) => {
-    const db = initDB({
+    const db = await initDB({
         debug: options.debug,
         dbName: options.dbName,
     });
@@ -192,7 +192,7 @@ export const scrapeWithBrowser = async ({
     let fullBrowser: Browser | null = null;
     let browser: BrowserContext | null = null;
 
-    startScrape({playscrape, options});
+    await startScrape({playscrape, options});
 
     try {
         fullBrowser = await chromium.launch();
@@ -224,10 +224,10 @@ export const scrapeWithBrowser = async ({
                 playBrowser,
                 options,
             });
-            endScrape({playscrape, options, status: "completed"});
+            await endScrape({playscrape, options, status: "completed"});
         }
     } catch (e) {
-        endScrape({
+        await endScrape({
             playscrape,
             options,
             status: "failed",

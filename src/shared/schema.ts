@@ -4,9 +4,17 @@ import {
     relations,
     sql,
 } from "drizzle-orm";
-import {index, integer, sqliteTable, text} from "drizzle-orm/sqlite-core";
+import {
+    index,
+    integer,
+    json,
+    pgTable,
+    serial,
+    text,
+    timestamp,
+} from "drizzle-orm/pg-core";
 
-export const records = sqliteTable(
+export const records = pgTable(
     "records",
     {
         id: text("id").primaryKey(),
@@ -15,14 +23,14 @@ export const records = sqliteTable(
         action: text("action").notNull(),
         content: text("content").notNull(),
         cookies: text("cookies"),
-        extracted: text("extracted", {mode: "json"}).notNull(),
-        created_at: text("created_at").default(sql`CURRENT_TIMESTAMP`),
-        updated_at: text("updated_at").default(sql`CURRENT_TIMESTAMP`),
-        scraped_at: text("scraped_at").default(sql`CURRENT_TIMESTAMP`),
+        extracted: json("extracted").notNull(),
+        created_at: timestamp("created_at").default(sql`now()`),
+        updated_at: timestamp("updated_at").default(sql`now()`),
+        scraped_at: timestamp("scraped_at").default(sql`now()`),
     },
     (records) => ({
-        sourceIndex: index("source_index").on(records.source),
-        updatedIndex: index("updated_index").on(records.updated_at),
+        sourceIndex: index("records_source_index").on(records.source),
+        updatedIndex: index("records_updated_index").on(records.updated_at),
     }),
 );
 
@@ -30,7 +38,7 @@ export const recordsRelations = relations(records, ({many}) => ({
     downloads: many(downloads),
 }));
 
-export const downloads = sqliteTable(
+export const downloads = pgTable(
     "downloads",
     {
         id: text("id").primaryKey(),
@@ -44,11 +52,13 @@ export const downloads = sqliteTable(
         orig_format: text("orig_format"),
         orig_url: text("orig_url").notNull(),
         orig_cookies: text("orig_cookies"),
-        created_at: text("created_at").default(sql`CURRENT_TIMESTAMP`),
-        updated_at: text("updated_at").default(sql`CURRENT_TIMESTAMP`),
+        created_at: timestamp("created_at").default(sql`now()`),
+        updated_at: timestamp("updated_at").default(sql`now()`),
     },
     (downloads) => ({
-        recordIdIndex: index("record_id_index").on(downloads.recordId),
+        recordIdIndex: index("downloads_record_id_index").on(
+            downloads.recordId,
+        ),
     }),
 );
 
@@ -59,10 +69,10 @@ export const downloadsRelations = relations(downloads, ({one}) => ({
     }),
 }));
 
-export const scrapes = sqliteTable(
+export const scrapes = pgTable(
     "scrapes",
     {
-        id: integer("id", {mode: "number"}).primaryKey(),
+        id: serial("id").primaryKey(),
         source: text("source").notNull(),
         status: text("status", {
             enum: ["running", "completed", "failed"],
@@ -73,11 +83,11 @@ export const scrapes = sqliteTable(
         updated_records: integer("updated_records").notNull().default(0),
         failed_records: integer("failed_records").notNull().default(0),
         statusText: text("status_text"),
-        started_at: text("started_at").default(sql`CURRENT_TIMESTAMP`),
-        ended_at: text("ended_at"),
+        started_at: timestamp("started_at").default(sql`now()`),
+        ended_at: timestamp("ended_at"),
     },
     (scrapes) => ({
-        sourceIndex: index("source_index").on(scrapes.source),
+        sourceIndex: index("scrapes_source_index").on(scrapes.source),
     }),
 );
 
@@ -85,10 +95,10 @@ export const scrapesRelations = relations(scrapes, ({many}) => ({
     scrapeRecords: many(scrapeRecords),
 }));
 
-export const scrapeRecords = sqliteTable(
+export const scrapeRecords = pgTable(
     "scrape_records",
     {
-        id: integer("id", {mode: "number"}).primaryKey(),
+        id: serial("id").primaryKey(),
         scrapeId: integer("scrapeId")
             .references(() => scrapes.id)
             .notNull(),
@@ -97,11 +107,13 @@ export const scrapeRecords = sqliteTable(
             enum: ["running", "created", "noChanges", "updated", "failed"],
         }).notNull(),
         statusText: text("status_text"),
-        started_at: text("started_at").default(sql`CURRENT_TIMESTAMP`),
-        ended_at: text("ended_at"),
+        started_at: timestamp("started_at").default(sql`now()`),
+        ended_at: timestamp("ended_at"),
     },
     (scrapeRecords) => ({
-        scrapeIdIndex: index("scrape_id_index").on(scrapeRecords.scrapeId),
+        scrapeIdIndex: index("scrape_records_scrape_id_index").on(
+            scrapeRecords.scrapeId,
+        ),
     }),
 );
 

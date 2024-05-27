@@ -6,6 +6,7 @@ export const startScrape = async ({
     playscrape,
     options,
 }: {playscrape: Playscrape; options: InternalOptions}) => {
+    console.log("Starting scrape...");
     if (options.test) {
         return;
     }
@@ -28,20 +29,28 @@ export const startScrape = async ({
         return;
     }
 
-    const [result] = await playscrape.db
-        .insert(scrapes)
-        .values({
-            source: options.source,
-            status: "running",
-        })
-        .returning({id: scrapes.id});
+    try {
+        const tmp = await playscrape.db
+            .insert(scrapes)
+            .values({
+                source: options.source,
+                status: "running",
+            })
+            .returning({id: scrapes.id});
 
-    if (!result?.id) {
+        const [result] = tmp;
+
+        if (!result?.id) {
+            console.error("Failed to start scrape.");
+            process.exit(1);
+        }
+
+        playscrape.currentScrapeId = result.id;
+    } catch (e) {
         console.error("Failed to start scrape.");
+        console.error(e);
         process.exit(1);
     }
-
-    playscrape.currentScrapeId = result.id;
 };
 
 export const endScrape = async ({
@@ -83,7 +92,7 @@ export const endScrape = async ({
             no_changes_records: playscrape.scrapeStats.noChanges,
             updated_records: playscrape.scrapeStats.updated,
             failed_records: playscrape.scrapeStats.failed,
-            ended_at: sql`CURRENT_TIMESTAMP`,
+            ended_at: sql`now()`,
         })
         .where(eq(scrapes.id, playscrape.currentScrapeId))
         .returning({id: scrapes.id});
