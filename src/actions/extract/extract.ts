@@ -155,11 +155,6 @@ export const handleExtract = async ({
                         options,
                     });
 
-                    const saveSpinner = ora({
-                        text: "Saving record...",
-                        indent,
-                    }).start();
-
                     if (oldRecord) {
                         const updated =
                             oldRecord &&

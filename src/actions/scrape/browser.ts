@@ -1,3 +1,4 @@
+import {URL} from "node:url";
 import ora from "ora";
 import {type Browser, type BrowserContext, chromium} from "playwright";
 
@@ -50,7 +51,7 @@ export const handleBrowserAction = async ({
         } else {
             await action.init({page});
         }
-        initSpinner.succeed("Initialized.");
+        initSpinner.succeed(`Initialized: ${page.url()}`);
     }
 
     const url = page.url();
@@ -77,6 +78,8 @@ export const handleBrowserAction = async ({
     }
 
     const undoVisit = async () => {
+        const backSpinner = ora({text: "Going back...", indent}).start();
+        await wait(delay);
         // If we're deeper in the stack, we need to go back.
         if ("undoVisit" in action && action.undoVisit) {
             await action.undoVisit({page});
@@ -85,15 +88,18 @@ export const handleBrowserAction = async ({
                 waitUntil: "domcontentloaded",
             });
         }
+        backSpinner.succeed(
+            `Went back to last page: ${new URL(page.url()).pathname}`,
+        );
     };
 
     if ("visit" in action) {
         const visitSpinner = ora({text: "Visiting...", indent}).start();
+        await wait(delay);
         await action.visit({
             page,
             action: async (nextAction: string) => {
-                await wait(delay);
-                visitSpinner.succeed("Visited.");
+                visitSpinner.succeed(`Visited (${nextAction}).`);
                 await handleBrowserAction({
                     actionName: nextAction,
                     actions,
@@ -101,6 +107,7 @@ export const handleBrowserAction = async ({
                     playBrowser,
                     options,
                 });
+                console.log(`Action (${actionName})`);
             },
         });
     } else if ("visitAll" in action) {
@@ -119,13 +126,15 @@ export const handleBrowserAction = async ({
             const link = links[curLink];
             curLink += 1;
 
+            const href = new URL((await link.getAttribute("href")) || "")
+                .pathname;
             const visitSpinner = ora({
-                text: "Visiting...",
+                text: `Visiting ${curLink}/${numLinks}: ${href}`,
                 indent,
             }).start();
             await wait(delay);
             await link.click();
-            visitSpinner.succeed("Visited.");
+            visitSpinner.succeed(`Visited ${curLink}/${numLinks}: ${href}`);
             await handleBrowserAction({
                 actionName: nextAction,
                 actions,
@@ -133,31 +142,37 @@ export const handleBrowserAction = async ({
                 playBrowser,
                 options,
             });
+            console.log(`Action (${actionName})`);
         } while (curLink < numLinks);
     }
 
     if ("next" in action && action.next) {
-        const nextSpinner = ora({text: "Next...", indent}).start();
+        const nextSpinner = ora({
+            text: `Next page (${actionName})...`,
+            indent,
+        }).start();
         await wait(delay);
         const result = await action.next({page});
 
         if (typeof result === "boolean") {
             if (!result) {
-                nextSpinner.succeed("No more results.");
+                nextSpinner.succeed("Next: No more results.");
                 return;
             }
         } else {
             const numMatches = await result.count();
 
             if (numMatches === 0) {
-                nextSpinner.succeed("No more results.");
+                nextSpinner.succeed("Next: No more results.");
                 return;
             }
 
             await result.click();
         }
 
-        nextSpinner.succeed("Next page.");
+        nextSpinner.succeed(
+            `Next page visited: ${new URL(page.url()).pathname}`,
+        );
 
         await handleBrowserAction({
             actionName,
@@ -187,16 +202,17 @@ export const scrapeWithBrowser = async ({
         db,
     };
 
-    const spinner = ora("Starting browser...").start();
-
     let fullBrowser: Browser | null = null;
     let browser: BrowserContext | null = null;
 
     await startScrape({playscrape, options});
 
+    const spinner = ora("Starting browser...").start();
+
     try {
         fullBrowser = await chromium.launch();
         browser = await fullBrowser.newContext();
+        browser.setDefaultTimeout(options.timeout || 60000);
         const page = await browser.newPage();
 
         const playBrowser: PlayscrapeBrowser = {
@@ -233,7 +249,7 @@ export const scrapeWithBrowser = async ({
             status: "failed",
             statusText: e.message,
         });
-        spinner.fail("Failed to scrape with browser.");
+        console.error("\nFailed to scrape with browser.");
         console.error(e);
         process.exit(1);
     } finally {

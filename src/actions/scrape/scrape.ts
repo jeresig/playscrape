@@ -6,7 +6,6 @@ export const startScrape = async ({
     playscrape,
     options,
 }: {playscrape: Playscrape; options: InternalOptions}) => {
-    console.log("Starting scrape...");
     if (options.test) {
         return;
     }
