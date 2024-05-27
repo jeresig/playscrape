@@ -1440,23 +1440,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@hono/node-server@npm:^1.9.0":
-  version: 1.11.1
-  resolution: "@hono/node-server@npm:1.11.1"
-  checksum: 10c0/87ad10b0e79c5434935cd83172d1923eb04c7ac1853e79b60303cae983876fc3c736e1826b824b34adae7a3e7289c99d764ecefe13b650f81b1f9d5baea3ed4a
-  languageName: node
-  linkType: hard
-
-"@hono/zod-validator@npm:^0.2.0":
-  version: 0.2.1
-  resolution: "@hono/zod-validator@npm:0.2.1"
-  peerDependencies:
-    hono: ">=3.9.0"
-    zod: ^3.19.1
-  checksum: 10c0/de399abc8ab26552111c745ae0ecad714af549e79b0412c2285d057bde72b434b09b8f9b65940d3a4b2dd82dcfb52e1601ac505effb410e4439e9c8835a99d7d
-  languageName: node
-  linkType: hard
-
 "@img/sharp-darwin-arm64@npm:0.33.3":
   version: 0.33.3
   resolution: "@img/sharp-darwin-arm64@npm:0.33.3"
@@ -2738,13 +2721,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"camelcase@npm:^7.0.1":
-  version: 7.0.1
-  resolution: "camelcase@npm:7.0.1"
-  checksum: 10c0/3adfc9a0e96d51b3a2f4efe90a84dad3e206aaa81dfc664f1bd568270e1bf3b010aad31f01db16345b4ffe1910e16ab411c7273a19a859addd1b98ef7cf4cfbd
-  languageName: node
-  linkType: hard
-
 "chalk@npm:^2.1.0, chalk@npm:^2.4.2":
   version: 2.4.2
   resolution: "chalk@npm:2.4.2"
@@ -2766,7 +2742,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"chalk@npm:^5.2.0, chalk@npm:^5.3.0":
+"chalk@npm:^5.3.0":
   version: 5.3.0
   resolution: "chalk@npm:5.3.0"
   checksum: 10c0/8297d436b2c0f95801103ff2ef67268d362021b8210daf8ddbe349695333eb3610a71122172ff3b0272f1ef2cf7cc2c41fdaa4715f52e49ffe04c56340feed09
@@ -2962,15 +2938,6 @@ __metadata:
   version: 0.0.1
   resolution: "concat-map@npm:0.0.1"
   checksum: 10c0/c996b1cfdf95b6c90fee4dae37e332c8b6eb7d106430c17d538034c0ad9a1630cb194d2ab37293b1bdd4d779494beee7786d586a50bd9376fd6f7bcc2bd4c98f
-  languageName: node
-  linkType: hard
-
-"copy-anything@npm:^3.0.2":
-  version: 3.0.5
-  resolution: "copy-anything@npm:3.0.5"
-  dependencies:
-    is-what: "npm:^4.1.8"
-  checksum: 10c0/01eadd500c7e1db71d32d95a3bfaaedcb839ef891c741f6305ab0461398056133de08f2d1bf4c392b364e7bdb7ce498513896e137a7a183ac2516b065c28a4fe
   languageName: node
   linkType: hard
 
@@ -3187,30 +3154,22 @@ __metadata:
   languageName: node
   linkType: hard
 
-"drizzle-kit@npm:^0.20.17":
-  version: 0.20.17
-  resolution: "drizzle-kit@npm:0.20.17"
+"drizzle-kit@npm:^0.21.4":
+  version: 0.21.4
+  resolution: "drizzle-kit@npm:0.21.4"
   dependencies:
     "@esbuild-kit/esm-loader": "npm:^2.5.5"
-    "@hono/node-server": "npm:^1.9.0"
-    "@hono/zod-validator": "npm:^0.2.0"
-    camelcase: "npm:^7.0.1"
-    chalk: "npm:^5.2.0"
     commander: "npm:^9.4.1"
     env-paths: "npm:^3.0.0"
     esbuild: "npm:^0.19.7"
     esbuild-register: "npm:^3.5.0"
     glob: "npm:^8.1.0"
     hanji: "npm:^0.0.5"
-    hono: "npm:^4.1.4"
     json-diff: "npm:0.9.0"
-    minimatch: "npm:^7.4.3"
-    semver: "npm:^7.5.4"
-    superjson: "npm:^2.2.1"
     zod: "npm:^3.20.2"
   bin:
     drizzle-kit: bin.cjs
-  checksum: 10c0/050c8f6414a6ec250c0ac2734415d6c9221a5bf21a968be2733cc688e0c1a39ecb59f9ea0d81ba7036733c9c6249075e9b493315cfcf47b512ef9bd70f6c1f52
+  checksum: 10c0/40917b55525f978665ae77602ed78394dfcacf1ad525a0c3197248d3426f9bae38a52fc0a5120ee4bff44e2e8745f59fc1ae043b5968fdd8f59c2a156da67840
   languageName: node
   linkType: hard
 
@@ -4203,13 +4162,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"hono@npm:^4.1.4":
-  version: 4.3.2
-  resolution: "hono@npm:4.3.2"
-  checksum: 10c0/a87ed147773620f2f37317e5074a04046b6c13f099da8f2393a3c017d41708a3b5e34e46c9303665cfdfb1a36bbb992d3136cbfc5dd8ce6c6b19ea46d9419156
-  languageName: node
-  linkType: hard
-
 "hosted-git-info@npm:^2.1.4":
   version: 2.8.9
   resolution: "hosted-git-info@npm:2.8.9"
@@ -4570,13 +4522,6 @@ __metadata:
   dependencies:
     call-bind: "npm:^1.0.2"
   checksum: 10c0/1545c5d172cb690c392f2136c23eec07d8d78a7f57d0e41f10078aa4f5daf5d7f57b6513a67514ab4f073275ad00c9822fc8935e00229d0a2089e1c02685d4b1
-  languageName: node
-  linkType: hard
-
-"is-what@npm:^4.1.8":
-  version: 4.1.16
-  resolution: "is-what@npm:4.1.16"
-  checksum: 10c0/611f1947776826dcf85b57cfb7bd3b3ea6f4b94a9c2f551d4a53f653cf0cb9d1e6518846648256d46ee6c91d114b6d09d2ac8a07306f7430c5900f87466aae5b
   languageName: node
   linkType: hard
 
@@ -4942,15 +4887,6 @@ __metadata:
   dependencies:
     brace-expansion: "npm:^2.0.1"
   checksum: 10c0/3defdfd230914f22a8da203747c42ee3c405c39d4d37ffda284dac5e45b7e1f6c49aa8be606509002898e73091ff2a3bbfc59c2c6c71d4660609f63aa92f98e3
-  languageName: node
-  linkType: hard
-
-"minimatch@npm:^7.4.3":
-  version: 7.4.6
-  resolution: "minimatch@npm:7.4.6"
-  dependencies:
-    brace-expansion: "npm:^2.0.1"
-  checksum: 10c0/e587bf3d90542555a3d58aca94c549b72d58b0a66545dd00eef808d0d66e5d9a163d3084da7f874e83ca8cc47e91c670e6c6f6593a3e7bb27fcc0e6512e87c67
   languageName: node
   linkType: hard
 
@@ -5532,7 +5468,7 @@ __metadata:
     "@types/xmlserializer": "npm:^0.6.6"
     "@xmldom/xmldom": "npm:^0.8.10"
     commander: "npm:^12.0.0"
-    drizzle-kit: "npm:^0.20.17"
+    drizzle-kit: "npm:^0.21.4"
     drizzle-orm: "npm:^0.30.10"
     fast-glob: "npm:^3.3.2"
     json-colorizer: "npm:^3.0.1"
@@ -5923,7 +5859,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"semver@npm:^7.3.5, semver@npm:^7.5.3, semver@npm:^7.5.4, semver@npm:^7.6.0":
+"semver@npm:^7.3.5, semver@npm:^7.5.3, semver@npm:^7.6.0":
   version: 7.6.0
   resolution: "semver@npm:7.6.0"
   dependencies:
@@ -6382,15 +6318,6 @@ __metadata:
   version: 1.0.5
   resolution: "strnum@npm:1.0.5"
   checksum: 10c0/64fb8cc2effbd585a6821faa73ad97d4b553c8927e49086a162ffd2cc818787643390b89d567460a8e74300148d11ac052e21c921ef2049f2987f4b1b89a7ff1
-  languageName: node
-  linkType: hard
-
-"superjson@npm:^2.2.1":
-  version: 2.2.1
-  resolution: "superjson@npm:2.2.1"
-  dependencies:
-    copy-anything: "npm:^3.0.2"
-  checksum: 10c0/5d8202c955170bd98ef2647f712754ac54d2d007923cfdb53a4b035304d8964b8c41d5eff41ee277896e2ac32e06abb009b571f1589416b729fe40216320cc7a
   languageName: node
   linkType: hard
 

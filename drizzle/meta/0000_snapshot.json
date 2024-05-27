@@ -1,10 +1,8 @@
 {
-  "id": "c03aa4e8-aaa8-434d-a9a8-9b4cc9f87516",
-  "prevId": "00000000-0000-0000-0000-000000000000",
-  "version": "5",
-  "dialect": "pg",
+  "version": "6",
+  "dialect": "postgresql",
   "tables": {
-    "downloads": {
+    "public.downloads": {
       "name": "downloads",
       "schema": "",
       "columns": {
@@ -90,21 +88,21 @@
         "downloads_recordId_records_id_fk": {
           "name": "downloads_recordId_records_id_fk",
           "tableFrom": "downloads",
-          "tableTo": "records",
           "columnsFrom": [
             "recordId"
           ],
+          "tableTo": "records",
           "columnsTo": [
             "id"
           ],
-          "onDelete": "no action",
-          "onUpdate": "no action"
+          "onUpdate": "no action",
+          "onDelete": "no action"
         }
       },
       "compositePrimaryKeys": {},
       "uniqueConstraints": {}
     },
-    "records": {
+    "public.records": {
       "name": "records",
       "schema": "",
       "columns": {
@@ -192,7 +190,7 @@
       "compositePrimaryKeys": {},
       "uniqueConstraints": {}
     },
-    "scrape_records": {
+    "public.scrape_records": {
       "name": "scrape_records",
       "schema": "",
       "columns": {
@@ -253,34 +251,34 @@
         "scrape_records_scrapeId_scrapes_id_fk": {
           "name": "scrape_records_scrapeId_scrapes_id_fk",
           "tableFrom": "scrape_records",
-          "tableTo": "scrapes",
           "columnsFrom": [
             "scrapeId"
           ],
+          "tableTo": "scrapes",
           "columnsTo": [
             "id"
           ],
-          "onDelete": "no action",
-          "onUpdate": "no action"
+          "onUpdate": "no action",
+          "onDelete": "no action"
         },
         "scrape_records_recordId_records_id_fk": {
           "name": "scrape_records_recordId_records_id_fk",
           "tableFrom": "scrape_records",
-          "tableTo": "records",
           "columnsFrom": [
             "recordId"
           ],
+          "tableTo": "records",
           "columnsTo": [
             "id"
           ],
-          "onDelete": "no action",
-          "onUpdate": "no action"
+          "onUpdate": "no action",
+          "onDelete": "no action"
         }
       },
       "compositePrimaryKeys": {},
       "uniqueConstraints": {}
     },
-    "scrapes": {
+    "public.scrapes": {
       "name": "scrapes",
       "schema": "",
       "columns": {
@@ -374,8 +372,10 @@
   "enums": {},
   "schemas": {},
   "_meta": {
-    "columns": {},
     "schemas": {},
-    "tables": {}
-  }
+    "tables": {},
+    "columns": {}
+  },
+  "id": "c03aa4e8-aaa8-434d-a9a8-9b4cc9f87516",
+  "prevId": "00000000-0000-0000-0000-000000000000"
 }
