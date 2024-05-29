@@ -16,6 +16,30 @@ import {endScrape, startScrape} from "./scrape.js";
 export const INITIAL_BROWSER_ACTION = "start";
 
 let initialized = false;
+const RETRIES = 3;
+
+const retry = async <T>(action: () => Promise<T>, failOnMaxRetries = true) => {
+    let lastError = null;
+
+    for (let i = 0; i <= RETRIES; i += 1) {
+        try {
+            return await action();
+        } catch (e) {
+            if (i < RETRIES - 1) {
+                console.error(`Retrying (${i + 1}/${RETRIES})...`);
+            }
+            lastError = e;
+        }
+    }
+
+    if (failOnMaxRetries) {
+        throw lastError;
+    }
+
+    console.error("Failed to retry action.");
+
+    return null;
+};
 
 export const handleBrowserAction = async ({
     actionName = INITIAL_BROWSER_ACTION,
@@ -44,13 +68,15 @@ export const handleBrowserAction = async ({
     if ("init" in action && action.init && !initialized) {
         initialized = true;
         const initSpinner = ora({text: "Initializing...", indent}).start();
-        if (typeof action.init === "string") {
-            await page.goto(action.init, {
-                waitUntil: "domcontentloaded",
-            });
-        } else {
-            await action.init({page});
-        }
+        await retry(async () => {
+            if (typeof action.init === "string") {
+                await page.goto(action.init, {
+                    waitUntil: "domcontentloaded",
+                });
+            } else if (action.init) {
+                await action.init({page});
+            }
+        });
         initSpinner.succeed(`Initialized: ${page.url()}`);
     }
 
@@ -80,14 +106,16 @@ export const handleBrowserAction = async ({
     const undoVisit = async () => {
         const backSpinner = ora({text: "Going back...", indent}).start();
         await wait(delay);
-        // If we're deeper in the stack, we need to go back.
-        if ("undoVisit" in action && action.undoVisit) {
-            await action.undoVisit({page});
-        } else if (actionName !== INITIAL_BROWSER_ACTION) {
-            await page.goBack({
-                waitUntil: "domcontentloaded",
-            });
-        }
+        await retry(async () => {
+            // If we're deeper in the stack, we need to go back.
+            if ("undoVisit" in action && action.undoVisit) {
+                await action.undoVisit({page});
+            } else if (actionName !== INITIAL_BROWSER_ACTION) {
+                await page.goBack({
+                    waitUntil: "domcontentloaded",
+                });
+            }
+        });
         backSpinner.succeed(
             `Went back to last page: ${new URL(page.url()).pathname}`,
         );
@@ -96,20 +124,22 @@ export const handleBrowserAction = async ({
     if ("visit" in action) {
         const visitSpinner = ora({text: "Visiting...", indent}).start();
         await wait(delay);
-        await action.visit({
-            page,
-            action: async (nextAction: string) => {
-                visitSpinner.succeed(`Visited (${nextAction}).`);
-                await handleBrowserAction({
-                    actionName: nextAction,
-                    actions,
-                    playscrape,
-                    playBrowser,
-                    options,
-                });
-                console.log(`Action (${actionName})`);
-            },
-        });
+        await retry(async () => {
+            await action.visit({
+                page,
+                action: async (nextAction: string) => {
+                    visitSpinner.succeed(`Visited (${nextAction}).`);
+                    await handleBrowserAction({
+                        actionName: nextAction,
+                        actions,
+                        playscrape,
+                        playBrowser,
+                        options,
+                    });
+                    console.log(`Action (${actionName})`);
+                },
+            });
+        }, false);
     } else if ("visitAll" in action) {
         let curLink = 0;
         let numLinks = 0;
@@ -133,7 +163,9 @@ export const handleBrowserAction = async ({
                 indent,
             }).start();
             await wait(delay);
-            await link.click();
+
+            await retry(async () => link.click(), false);
+
             visitSpinner.succeed(`Visited ${curLink}/${numLinks}: ${href}`);
             await handleBrowserAction({
                 actionName: nextAction,
@@ -152,7 +184,13 @@ export const handleBrowserAction = async ({
             indent,
         }).start();
         await wait(delay);
-        const result = await action.next({page});
+
+        let result: any = null;
+        await retry(async () => {
+            if (action.next) {
+                result = await action.next({page});
+            }
+        });
 
         if (typeof result === "boolean") {
             if (!result) {
