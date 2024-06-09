@@ -103,12 +103,11 @@ export const handleExtract = async ({
             let status: "created" | "noChanges" | "updated" = "created";
             let statusText: string | undefined;
 
-            const saveSpinner = ora({
-                text: "Saving record...",
-                indent,
-            }).start();
-
             if (dryRun) {
+                const saveSpinner = ora({
+                    text: "Saving record...",
+                    indent,
+                }).start();
                 saveSpinner.succeed("Record extraction dry run complete.");
                 if (oldRecord) {
                     if (oldRecord.id !== record.id) {
@@ -135,6 +134,10 @@ export const handleExtract = async ({
                     );
                 }
             } else if (test) {
+                const saveSpinner = ora({
+                    text: "Saving record...",
+                    indent,
+                }).start();
                 saveSpinner.succeed("Record tested.");
                 await testRecord({id: record.id, extracted, options});
             } else {
@@ -154,6 +157,11 @@ export const handleExtract = async ({
                         },
                         options,
                     });
+
+                    const saveSpinner = ora({
+                        text: "Saving record...",
+                        indent,
+                    }).start();
 
                     if (oldRecord) {
                         const updated =

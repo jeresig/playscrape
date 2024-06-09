@@ -52,6 +52,16 @@ type VisitAction = BaseBrowserAction & {
 };
 
 type VisitAllAction = BaseBrowserAction & {
+    shouldVisit?: ({
+        page,
+        href,
+        record,
+    }: {
+        page: Page;
+        href: string;
+        record: any;
+    }) => Promise<boolean>;
+
     visitAll: ({
         page,
     }: {

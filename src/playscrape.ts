@@ -90,6 +90,14 @@ const parseActionFile = async (
     if (extraOptions.test && !fs.existsSync(testDir)) {
         fs.mkdirSync(testDir, {recursive: true});
     }
+    const imageDir = importOptions.imageDir || path.join(outputDir, "images");
+    if (
+        !extraOptions.test &&
+        !extraOptions.dryRun &&
+        !fs.existsSync(imageDir)
+    ) {
+        fs.mkdirSync(imageDir, {recursive: true});
+    }
 
     const options: InternalOptions = {
         ...extraOptions,
@@ -103,6 +111,7 @@ const parseActionFile = async (
         dbName,
         exportFile,
         testDir,
+        imageDir,
     };
 
     return {

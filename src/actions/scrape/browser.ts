@@ -2,14 +2,16 @@ import {URL} from "node:url";
 import ora from "ora";
 import {type Browser, type BrowserContext, chromium} from "playwright";
 
+import {eq} from "drizzle-orm";
 import {initDB} from "../../shared/db.js";
+import {records} from "../../shared/schema.js";
 import type {
     BrowserAction,
     InternalOptions,
     Playscrape,
     PlayscrapeBrowser,
 } from "../../shared/types.js";
-import {wait} from "../../shared/utils.js";
+import {hash, wait} from "../../shared/utils.js";
 import {handleExtract} from "../extract/extract.js";
 import {endScrape, startScrape} from "./scrape.js";
 
@@ -56,6 +58,7 @@ export const handleBrowserAction = async ({
 }) => {
     const {indent, delay} = options;
     const {page} = playBrowser;
+    const {db} = playscrape;
 
     console.log(`Action (${actionName})`);
 
@@ -123,23 +126,31 @@ export const handleBrowserAction = async ({
 
     if ("visit" in action) {
         const visitSpinner = ora({text: "Visiting...", indent}).start();
+        let finished = false;
+        const handleAction = async (nextAction: string) => {
+            finished = true;
+            visitSpinner.succeed(`Visited (${nextAction}).`);
+            await handleBrowserAction({
+                actionName: nextAction,
+                actions,
+                playscrape,
+                playBrowser,
+                options,
+            });
+            console.log(`Action (${actionName})`);
+        };
+
         await wait(delay);
         await retry(async () => {
             await action.visit({
                 page,
-                action: async (nextAction: string) => {
-                    visitSpinner.succeed(`Visited (${nextAction}).`);
-                    await handleBrowserAction({
-                        actionName: nextAction,
-                        actions,
-                        playscrape,
-                        playBrowser,
-                        options,
-                    });
-                    console.log(`Action (${actionName})`);
-                },
+                action: handleAction,
             });
         }, false);
+
+        if (!finished) {
+            visitSpinner.succeed("Visit skipped.");
+        }
     } else if ("visitAll" in action) {
         let curLink = 0;
         let numLinks = 0;
@@ -158,6 +169,40 @@ export const handleBrowserAction = async ({
 
             const href = new URL((await link.getAttribute("href")) || "")
                 .pathname;
+
+            if ("shouldVisit" in action && action.shouldVisit) {
+                const skipSpinner = ora({
+                    text: `Checking if should be skipped: ${href}`,
+                    indent,
+                }).start();
+
+                const id = hash(href);
+
+                const match = await db.query.records.findFirst({
+                    where: eq(records.id, id),
+                    columns: {
+                        extracted: true,
+                    },
+                });
+
+                if (match?.extracted) {
+                    const shouldVisit = await action.shouldVisit({
+                        page,
+                        href,
+                        record: match.extracted,
+                    });
+
+                    if (!shouldVisit) {
+                        skipSpinner.succeed(
+                            `Skipped ${curLink}/${numLinks}: ${href}`,
+                        );
+                        continue;
+                    }
+                }
+
+                skipSpinner.clear();
+            }
+
             const visitSpinner = ora({
                 text: `Visiting ${curLink}/${numLinks}: ${href}`,
                 indent,
