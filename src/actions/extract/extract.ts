@@ -12,7 +12,7 @@ import type {
     Playscrape,
 } from "../../shared/types.js";
 import {hash} from "../../shared/utils.js";
-import {testRecord} from "../test.js";
+import {testImages, testRecord} from "../test.js";
 import {getDomQuery} from "./dom-query.js";
 import {downloadImages} from "./downloads.js";
 
@@ -134,12 +134,29 @@ export const handleExtract = async ({
                     );
                 }
             } else if (test) {
-                const saveSpinner = ora({
-                    text: "Saving record...",
-                    indent,
-                }).start();
-                saveSpinner.succeed("Record tested.");
                 await testRecord({id: record.id, extracted, options});
+
+                if (action.downloadImages) {
+                    const imageSpinner = ora({
+                        text: "Getting images for testing...",
+                        indent,
+                    }).start();
+
+                    const urls = await action.downloadImages({
+                        ...domQuery,
+                        record,
+                        url,
+                        content,
+                    });
+
+                    imageSpinner.succeed("Got image URLs for testing.");
+
+                    await testImages({
+                        id: record.id,
+                        options,
+                        urls,
+                    });
+                }
             } else {
                 await db.transaction(async (tx) => {
                     // Download the images first, so that we don't save the record
