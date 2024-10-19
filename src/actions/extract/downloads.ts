@@ -35,16 +35,20 @@ const getNormalSize = ({
 
 export const getImageIdAndFileName = ({
     url,
-    format,
+    format = "jpg",
 }: {
     url: string;
-    format: string;
+    format?: string;
 }) => {
-    const isFileURL = url.startsWith("file://");
+    const isLocalFile = !url.startsWith("http");
     let id = "";
     let origFileName = "";
 
-    if (isFileURL) {
+    if (isLocalFile) {
+        if (!url.startsWith("file://") && !url.startsWith("/")) {
+            throw new Error("Local file must be an absolute path.");
+        }
+
         const filePath = nodeUrl.fileURLToPath(url);
         origFileName = path.basename(filePath);
         id = hash(origFileName);
@@ -60,7 +64,7 @@ export const getImageIdAndFileName = ({
 
     const fileName = format === "original" ? origFileName : `${id}.${format}`;
 
-    return {id, fileName, isFileURL};
+    return {id, fileName, isLocalFile};
 };
 
 const getAWS = (s3: S3Options) => {
@@ -89,9 +93,9 @@ export const downloadImage = async ({
     options: InternalOptions;
 }): Promise<NewDownload> => {
     const {format, dryRun, imageDir, overwrite, downloadTo, s3} = options;
-    const {id, fileName, isFileURL} = getImageIdAndFileName({
+    const {id, fileName, isLocalFile} = getImageIdAndFileName({
         url,
-        format: format || "jpg",
+        format,
     });
     const localFilePath = imageDir ? path.join(imageDir, fileName) : fileName;
     let image: Sharp | null = null;
@@ -142,8 +146,10 @@ export const downloadImage = async ({
     }
 
     if (!image) {
-        if (isFileURL) {
-            const filePath = nodeUrl.fileURLToPath(url);
+        if (isLocalFile) {
+            const filePath = url.startsWith("file://")
+                ? nodeUrl.fileURLToPath(url)
+                : url;
 
             if (!fs.existsSync(filePath)) {
                 throw new Error(`File does not exist: ${filePath}`);
@@ -288,10 +294,10 @@ export const downloadImages = async ({
             text: `Downloading Image from ${url}`,
             indent,
         }).start();
-        const hashedUrl = hash(url);
+        const {id} = getImageIdAndFileName({url});
         const existingDownload: Download | undefined =
             await db.query.downloads.findFirst({
-                where: eq(downloads.id, hashedUrl),
+                where: eq(downloads.id, id),
             });
 
         if (existingDownload) {

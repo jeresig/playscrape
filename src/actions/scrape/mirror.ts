@@ -1,6 +1,6 @@
 import {promises as fs} from "node:fs";
 import * as path from "node:path";
-import * as FastGlob from "fast-glob";
+import FastGlob from "fast-glob";
 import ora from "ora";
 
 import {initDB} from "../../shared/db.js";
@@ -35,9 +35,12 @@ export const scrapeMirroredFiles = async ({
     await startScrape({playscrape, options});
 
     try {
-        const patterns = (options.test
-            ? action.testFiles
-            : action.htmlFiles) || ["**/*.html"];
+        const patterns = options.test ? action.testFiles : action.htmlFiles;
+
+        if (!patterns) {
+            throw new Error("No file pattern found to extract from.");
+        }
+
         const files = await FastGlob.glob(patterns);
 
         if (files.length === 0) {
