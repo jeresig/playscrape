@@ -170,7 +170,7 @@ export const handleBrowserAction = async ({
             const href = new URL((await link.getAttribute("href")) || "")
                 .pathname;
 
-            if ("shouldVisit" in action && action.shouldVisit) {
+            if ("shouldRevisit" in action && action.shouldRevisit) {
                 const skipSpinner = ora({
                     text: `Checking if should be skipped: ${href}`,
                     indent,
@@ -186,13 +186,13 @@ export const handleBrowserAction = async ({
                 });
 
                 if (match?.extracted) {
-                    const shouldVisit = await action.shouldVisit({
+                    const shouldRevisit = await action.shouldRevisit({
                         page,
                         href,
                         record: match.extracted,
                     });
 
-                    if (!shouldVisit) {
+                    if (!shouldRevisit) {
                         skipSpinner.succeed(
                             `Skipped ${curLink}/${numLinks}: ${href}`,
                         );

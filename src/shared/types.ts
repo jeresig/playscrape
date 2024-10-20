@@ -52,7 +52,7 @@ type VisitAction = BaseBrowserAction & {
 };
 
 type VisitAllAction = BaseBrowserAction & {
-    shouldVisit?: ({
+    shouldRevisit?: ({
         page,
         href,
         record,
